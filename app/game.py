@@ -1,7 +1,7 @@
 from collections import Counter
 from random import SystemRandom
 
-from .types import FeedbackStatus, ModeDefinition
+from .types import Choice, FeedbackStatus, ModeDefinition
 from .variants import VARIANTS, get_variant, max_attempts_for
 
 CODE_LENGTH = 4
@@ -40,7 +40,7 @@ MODES: dict[str, ModeDefinition] = {
 _rng = SystemRandom()
 
 
-def _choices(mode: str) -> list[dict[str, str]]:
+def _choices(mode: str) -> list[Choice]:
     if mode in MODES:
         return MODES[mode]["choices"]
     variant = get_variant(mode)
