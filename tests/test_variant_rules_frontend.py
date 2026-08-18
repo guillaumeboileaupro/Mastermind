@@ -28,6 +28,6 @@ def test_variant_help_contains_three_rule_steps() -> None:
     """Le composant d'aide prévoit un résumé et trois étapes de règle."""
     rules_script = (STATIC_DIR / "variant-rules.js").read_text(encoding="utf-8")
 
-    assert 'id="variant-rules-card"' in rules_script
+    assert 'card.id = "variant-rules-card"' in rules_script
     assert 'id="variant-rules-list"' in rules_script
     assert 'rules.steps.forEach' in rules_script
