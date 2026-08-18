@@ -7,3 +7,4 @@ Icon=mastermind
 Terminal=false
 Categories=Game;LogicGame;
 StartupNotify=true
+StartupWMClass=mastermind
