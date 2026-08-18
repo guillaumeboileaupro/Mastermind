@@ -21,7 +21,7 @@ jobs:
       - name: Install build tools
         run: |
           apt-get update
-          apt-get install -y git binutils dpkg-dev libegl1 libgl1 libxkbcommon-x11-0 libxcb-cursor0
+          apt-get install -y git binutils dpkg-dev libdbus-1-3 libegl1 libgl1 libxkbcommon-x11-0 libxcb-cursor0
 
       - name: Checkout
         uses: actions/checkout@v4
