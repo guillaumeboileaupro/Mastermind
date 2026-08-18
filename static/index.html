@@ -32,6 +32,11 @@
             <div class="controls">
                 <label for="mode">Mode</label>
                 <select id="mode"></select>
+                <label for="difficulty">Difficulté</label>
+                <select id="difficulty">
+                    <option value="normal">Normal</option>
+                    <option value="easy">Facile enfant</option>
+                </select>
                 <button id="new-game" class="primary">Nouvelle partie</button>
             </div>
         </header>
@@ -73,6 +78,11 @@
                 </div>
                 <span id="score-help" class="score-help">Aucune tentative pour le moment.</span>
             </div>
+            <div id="easy-legend" class="easy-legend" hidden aria-label="Légende du mode facile">
+                <span class="feedback-chip feedback-well">✓ Bien placé</span>
+                <span class="feedback-chip feedback-misplaced">↔ Mal placé</span>
+                <span class="feedback-chip feedback-absent">✕ Absent</span>
+            </div>
             <div id="attempts" class="attempts"></div>
         </section>
 
@@ -99,6 +109,10 @@
                 <article>
                     <strong>4. Gagne avec 40</strong>
                     <p>Quand le résultat est <strong>40</strong>, les 4 valeurs sont correctes et bien placées : la combinaison est trouvée.</p>
+                </article>
+                <article class="easy-help-card">
+                    <strong>Facile enfant</strong>
+                    <p>Choisis <strong>Facile enfant</strong> dans « Difficulté ». Après chaque essai, le jeu indique pour chaque couleur si elle est bien placée, mal placée ou absente du code.</p>
                 </article>
             </div>
         </section>
