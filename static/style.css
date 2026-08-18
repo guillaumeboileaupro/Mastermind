@@ -166,7 +166,7 @@ button.danger { color: #b42318; }
     border-radius: 14px;
     background: #f8fafc;
 }
-.attempt-tokens { display: flex; gap: 7px; }
+.attempt-tokens { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; }
 .result-badge {
     min-width: 52px;
     padding: 7px 11px;
@@ -176,6 +176,66 @@ button.danger { color: #b42318; }
     text-align: center;
     font-weight: 900;
     font-variant-numeric: tabular-nums;
+}
+
+.easy-legend {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: -4px 0 20px;
+}
+.easy-legend[hidden] { display: none; }
+.feedback-chip,
+.easy-feedback-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    font-weight: 800;
+}
+.feedback-chip { padding: 7px 11px; font-size: .82rem; }
+.easy-feedback {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    min-width: 82px;
+    padding: 7px 5px;
+    border: 2px solid transparent;
+    border-radius: 14px;
+}
+.easy-feedback .token.small { width: 42px; height: 42px; flex-basis: 42px; }
+.easy-feedback-label {
+    min-height: 24px;
+    padding: 4px 7px;
+    font-size: .68rem;
+    line-height: 1;
+    white-space: nowrap;
+}
+.feedback-well_placed,
+.feedback-well {
+    border-color: #86efac;
+    background: #ecfdf3;
+}
+.feedback-well_placed .easy-feedback-label,
+.feedback-chip.feedback-well { color: #067647; }
+.feedback-misplaced {
+    border-color: #fde68a;
+    background: #fffbeb;
+}
+.feedback-misplaced .easy-feedback-label,
+.feedback-chip.feedback-misplaced { color: #a15c00; }
+.feedback-absent {
+    border-color: #fecaca;
+    background: #fef2f2;
+}
+.feedback-absent .easy-feedback-label,
+.feedback-chip.feedback-absent { color: #b42318; }
+.feedback-unknown { border-color: #d0d5dd; background: #f8fafc; }
+.easy-attempt {
+    padding-top: 16px;
+    padding-bottom: 16px;
 }
 
 .help-grid {
@@ -191,6 +251,7 @@ button.danger { color: #b42318; }
 }
 .help-grid strong { display: block; margin-bottom: 8px; color: #0B2E6D; }
 .help-grid p { margin-bottom: 0; color: #667085; line-height: 1.55; }
+.easy-help-card { grid-column: 1 / -1; background: #f0f9ff !important; border-color: #bae6fd !important; }
 
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; }
@@ -269,5 +330,9 @@ th { color: #667085; font-size: .8rem; text-transform: uppercase; letter-spacing
     .guess-slot { width: 58px; height: 58px; flex-basis: 58px; }
     .guess-row, .palette { gap: 7px; }
     .help-grid { grid-template-columns: 1fr; }
+    .easy-help-card { grid-column: auto; }
+    .easy-feedback { min-width: 70px; }
+    .attempt-row.easy-attempt { grid-template-columns: 38px 1fr; }
+    .attempt-row.easy-attempt .result-badge { grid-column: 2; justify-self: start; }
     .victory-card { padding: 28px 20px; }
 }
