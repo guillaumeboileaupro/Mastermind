@@ -7,6 +7,7 @@
     <title>Mastermind</title>
     <link rel="icon" href="/static/mastermind.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/variants.css">
 </head>
 <body>
     <div id="victory-overlay" class="victory-overlay" aria-hidden="true">
@@ -36,24 +37,24 @@
             </div>
             <div class="help-grid">
                 <article>
-                    <strong>Trouve le code</strong>
-                    <p>Le jeu choisit une combinaison secrète de 4 positions parmi 6 choix. Une même couleur ou un même chiffre peut apparaître plusieurs fois.</p>
+                    <strong>Choisis une variante</strong>
+                    <p>Chaque édition change le nombre de choix, la longueur du code ou la limite d’essais. Les éditions électroniques permettent aussi de choisir la longueur prévue par leur règle.</p>
                 </article>
                 <article>
-                    <strong>Propose une combinaison</strong>
-                    <p>Ajoute 4 pions par clic ou glisser-déposer, puis valide. Tu peux cliquer sur un pion posé pour le retirer avant de valider.</p>
+                    <strong>Trouve le code</strong>
+                    <p>Ajoute les pions, chiffres, lettres ou symboles par clic ou glisser-déposer, puis valide ta proposition. Les répétitions sont autorisées.</p>
                 </article>
                 <article>
                     <strong>Lis le résultat</strong>
-                    <p>Le premier chiffre indique le nombre de valeurs bien placées. Le second indique les bonnes valeurs placées au mauvais endroit.</p>
+                    <p>Le premier chiffre indique les valeurs bien placées et le second les bonnes valeurs placées au mauvais endroit.</p>
                 </article>
                 <article>
-                    <strong>Gagne en 10 essais maximum</strong>
-                    <p>Un résultat <strong>40</strong> au plus tard au 10e essai gagne la partie. À partir du 11e essai, tu peux continuer à chercher, mais la partie sera terminée hors limite et rapportera 0 point.</p>
+                    <strong>Respecte la limite de l’édition</strong>
+                    <p>Le nombre d’essais donnant des points dépend de la variante. Tu peux continuer après la limite pour trouver le code, mais le score final sera nul.</p>
                 </article>
                 <article class="easy-help-card">
                     <strong>Facile enfant</strong>
-                    <p>Choisis <strong>Facile enfant</strong> dans « Difficulté ». Après chaque essai, le jeu indique pour chaque couleur si elle est bien placée, mal placée ou absente du code.</p>
+                    <p>En difficulté « Facile enfant », chaque pion reçoit un indice individuel. Secret Search affiche ses flèches alphabétiques quelle que soit la difficulté.</p>
                 </article>
             </div>
         </section>
@@ -66,12 +67,16 @@
                 <div>
                     <p class="eyebrow">Jeu de logique</p>
                     <h1>Mastermind</h1>
-                    <p>4 positions, 6 choix, répétitions autorisées.</p>
+                    <p id="rules-summary">Choisis une variante et trouve le code secret.</p>
                 </div>
             </div>
-            <div class="controls">
-                <label for="mode">Mode</label>
-                <select id="mode"></select>
+            <div class="controls variant-controls">
+                <label for="mode">Variante</label>
+                <select id="mode" aria-label="Variante de Mastermind"></select>
+                <span id="code-length-group" class="control-pair" hidden>
+                    <label for="code-length">Longueur</label>
+                    <select id="code-length" aria-label="Longueur du code"></select>
+                </span>
                 <label for="difficulty">Difficulté</label>
                 <select id="difficulty">
                     <option value="normal">Normal</option>
@@ -81,6 +86,8 @@
                 <button id="new-game" class="primary">Nouvelle partie</button>
             </div>
         </header>
+
+        <p id="variant-meta" class="variant-meta" aria-live="polite"></p>
 
         <section class="stats-grid" aria-label="Statistiques">
             <article><span>Temps</span><strong id="timer">00:00</strong></article>
@@ -93,7 +100,7 @@
             <div class="section-heading">
                 <div>
                     <p class="eyebrow">Combinaison</p>
-                    <h2 id="mode-title">Choisis 4 valeurs</h2>
+                    <h2 id="mode-title">Choisis une variante</h2>
                 </div>
                 <button id="give-up" class="danger subtle">Abandonner</button>
             </div>
@@ -138,7 +145,7 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Mode</th>
+                            <th>Variante</th>
                             <th>Joueur</th>
                             <th>Résultat</th>
                             <th>Essais</th>
