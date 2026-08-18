@@ -196,5 +196,5 @@ python -m pytest -q
 ```
 
 Toutes les fonctions Python possèdent une docstring et des annotations de type.
-La CI exécute le contrôle statique strict avec `mypy` avant les **51 tests
+La CI exécute le contrôle statique strict avec `mypy` avant les **52 tests
 automatisés**.

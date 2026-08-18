@@ -59,3 +59,11 @@ def test_select_controls_match_the_application_style() -> None:
     assert "appearance: none" in stylesheet
     assert "background-image: url(\"data:image/svg+xml" in stylesheet
     assert "select:focus-visible" in stylesheet
+
+
+def test_help_rule_titles_are_not_numbered() -> None:
+    """Les titres des règles restent lisibles sans numérotation artificielle."""
+    page = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+
+    for number in range(1, 5):
+        assert f"<strong>{number}." not in page
