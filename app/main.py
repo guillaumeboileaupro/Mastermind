@@ -11,13 +11,16 @@ from pydantic import BaseModel
 
 from .game import (
     CODE_LENGTH,
-    MAX_WIN_ATTEMPTS,
     MODES,
+    VARIANTS,
+    allowed_code_lengths,
     calculate_score,
     compact_result,
-    evaluate_guess_feedback,
+    default_code_length,
+    evaluate_variant_feedback,
     generate_secret,
     live_score,
+    max_attempts_for,
     validate_guess,
 )
 from .storage import (
@@ -61,16 +64,21 @@ def public_game(game: Game) -> PublicGame:
     """Masque le secret actif et prépare une partie pour l'API publique."""
     elapsed = elapsed_seconds(game)
     active = game["status"] == "active"
+    max_attempts = max_attempts_for(game["mode"])
     return {
         "id": game["id"],
         "mode": game["mode"],
+        "code_length": game["code_length"],
+        "max_attempts": max_attempts,
         "status": game["status"],
         "attempts": game["attempts"],
         "started_at": game["started_at"],
         "ended_at": game["ended_at"],
         "elapsed_seconds": elapsed,
         "score": game["score"],
-        "current_score": live_score(len(game["attempts"])) if active else game["score"],
+        "current_score": (
+            live_score(len(game["attempts"]), max_attempts) if active else game["score"]
+        ),
         "secret": None if active else game["secret"],
         "player_name": game["player_name"],
     }
@@ -83,12 +91,13 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     yield
 
 
-app = FastAPI(title="Mastermind API", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="Mastermind API", version="1.1.0", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 class NewGameRequest(BaseModel):
     mode: str
+    code_length: int | None = None
 
 
 class GuessRequest(BaseModel):
@@ -113,11 +122,12 @@ def health() -> dict[str, str]:
 
 @app.get("/api/modes")
 def modes() -> ModesResponse:
-    """Expose les modes, choix et règles disponibles."""
+    """Expose les anciens modes et le catalogue des variantes jouables."""
     return {
         "code_length": CODE_LENGTH,
         "repetition_allowed": True,
         "modes": MODES,
+        "variants": VARIANTS,
     }
 
 
@@ -130,9 +140,23 @@ def current_game() -> PublicGame | None:
 
 @app.post("/api/games", status_code=201)
 def new_game(payload: NewGameRequest) -> PublicGame:
-    """Démarre une partie et abandonne l'éventuelle partie active."""
-    if payload.mode not in MODES:
+    """Démarre une partie dans le mode ou la variante sélectionné."""
+    known = payload.mode in MODES or payload.mode in VARIANTS
+    if not known:
         raise HTTPException(status_code=400, detail="Mode de jeu inconnu")
+
+    try:
+        allowed_lengths = allowed_code_lengths(payload.mode)
+        code_length = (
+            payload.code_length
+            if payload.code_length is not None
+            else default_code_length(payload.mode)
+        )
+        if code_length not in allowed_lengths:
+            raise ValueError("Longueur de code invalide pour cette variante")
+        secret = generate_secret(payload.mode, code_length)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     now = utc_now()
     current = get_current_game()
@@ -142,7 +166,12 @@ def new_game(payload: NewGameRequest) -> PublicGame:
             {current["id"]: elapsed_seconds(current, now)},
         )
 
-    game = create_game(payload.mode, generate_secret(payload.mode), now.isoformat())
+    game = create_game(
+        payload.mode,
+        secret,
+        now.isoformat(),
+        code_length=code_length,
+    )
     return public_game(game)
 
 
@@ -156,11 +185,11 @@ def submit_guess(game_id: str, payload: GuessRequest) -> PublicGame:
         raise HTTPException(status_code=409, detail="Cette partie est terminée")
 
     try:
-        validate_guess(game["mode"], payload.guess)
+        validate_guess(game["mode"], payload.guess, game["code_length"])
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    feedback = evaluate_guess_feedback(game["secret"], payload.guess)
+    feedback = evaluate_variant_feedback(game["mode"], game["secret"], payload.guess)
     well_placed = feedback.count("well_placed")
     misplaced = feedback.count("misplaced")
     attempts: list[Attempt] = list(game["attempts"])
@@ -178,10 +207,11 @@ def submit_guess(game_id: str, payload: GuessRequest) -> PublicGame:
     )
     save_attempts(game_id, attempts)
 
-    if well_placed == CODE_LENGTH:
+    if well_placed == game["code_length"]:
         duration = elapsed_seconds(game, now)
-        won_in_time = len(attempts) <= MAX_WIN_ATTEMPTS
-        score = calculate_score(len(attempts)) if won_in_time else 0
+        max_attempts = max_attempts_for(game["mode"])
+        won_in_time = len(attempts) <= max_attempts
+        score = calculate_score(len(attempts), max_attempts) if won_in_time else 0
         finish_game(
             game_id,
             status="won" if won_in_time else "completed",
