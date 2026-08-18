@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mastermind</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <main class="page">
+        <header class="hero">
+            <div>
+                <p class="eyebrow">Jeu de logique</p>
+                <h1>Mastermind</h1>
+                <p>4 positions, 6 choix, répétitions autorisées.</p>
+            </div>
+            <div class="controls">
+                <label for="mode">Mode</label>
+                <select id="mode"></select>
+                <button id="new-game" class="primary">Nouvelle partie</button>
+            </div>
+        </header>
+
+        <section class="stats-grid" aria-label="Statistiques">
+            <article><span>Temps</span><strong id="timer">00:00</strong></article>
+            <article><span>Score actuel</span><strong id="current-score">0</strong></article>
+            <article><span>Score total</span><strong id="total-score">0</strong></article>
+            <article><span>Victoires</span><strong id="wins">0</strong></article>
+        </section>
+
+        <section class="game-card">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Combinaison</p>
+                    <h2 id="mode-title">Choisis 4 valeurs</h2>
+                </div>
+                <button id="give-up" class="danger subtle">Abandonner</button>
+            </div>
+
+            <div id="current-guess" class="guess-row" aria-label="Combinaison actuelle"></div>
+            <div id="choice-palette" class="palette" aria-label="Choix possibles"></div>
+
+            <div class="guess-actions">
+                <button id="backspace" class="subtle">Effacer la dernière</button>
+                <button id="clear" class="subtle">Tout effacer</button>
+                <button id="submit-guess" class="primary" disabled>Valider</button>
+            </div>
+
+            <p id="message" class="message" role="status"></p>
+        </section>
+
+        <section class="panel">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Partie en cours</p>
+                    <h2>Tentatives</h2>
+                </div>
+                <span class="score-help">Score 21 = 2 bien placées, 1 mal placée</span>
+            </div>
+            <div id="attempts" class="attempts"></div>
+        </section>
+
+        <section class="panel">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Mémoire</p>
+                    <h2>Historique des parties</h2>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Mode</th>
+                            <th>Résultat</th>
+                            <th>Essais</th>
+                            <th>Temps</th>
+                            <th>Score</th>
+                            <th>Code</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script src="/static/app.js" defer></script>
+</body>
+</html>
