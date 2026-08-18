@@ -2,7 +2,10 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .venv/
+.venv-*/
 venv/
+build/
+dist/
 data/*.db
 data/*.db-*
 .env
