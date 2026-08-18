@@ -13,7 +13,7 @@ from .game import (
     MODES,
     calculate_score,
     compact_result,
-    evaluate_guess,
+    evaluate_guess_feedback,
     generate_secret,
     live_score,
     validate_guess,
@@ -152,7 +152,9 @@ def submit_guess(game_id: str, payload: GuessRequest) -> PublicGame:
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    well_placed, misplaced = evaluate_guess(game["secret"], payload.guess)
+    feedback = evaluate_guess_feedback(game["secret"], payload.guess)
+    well_placed = feedback.count("well_placed")
+    misplaced = feedback.count("misplaced")
     attempts: list[Attempt] = list(game["attempts"])
     now = utc_now()
     attempts.append(
@@ -162,6 +164,7 @@ def submit_guess(game_id: str, payload: GuessRequest) -> PublicGame:
             "well_placed": well_placed,
             "misplaced": misplaced,
             "result": compact_result(well_placed, misplaced),
+            "feedback": feedback,
             "created_at": now.isoformat(),
         }
     )
