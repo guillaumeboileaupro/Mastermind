@@ -43,7 +43,6 @@ class PublicGame(TypedDict):
 class Choice(TypedDict):
     value: str
     label: str
-    color: NotRequired[str]
 
 
 class ModeDefinition(TypedDict):

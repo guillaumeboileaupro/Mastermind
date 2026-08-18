@@ -89,8 +89,8 @@ function renderToken(value, mode, small = false) {
     const token = document.createElement("span");
     token.className = `token${small ? " small" : ""}`;
     token.title = choice?.label || value;
-    if (mode === "colors" && choice?.color) {
-        token.style.background = choice.color;
+    if (mode === "colors" && choice) {
+        token.style.background = choice.value;
         token.setAttribute("aria-label", choice.label);
     } else {
         token.textContent = choice?.label || value;
@@ -138,7 +138,7 @@ function renderPalette() {
         button.setAttribute("aria-label", choice.label);
         button.draggable = true;
         if ((state.game?.mode || els.mode.value) === "colors") {
-            button.style.background = choice.color;
+            button.style.background = choice.value;
         } else {
             button.textContent = choice.label;
         }

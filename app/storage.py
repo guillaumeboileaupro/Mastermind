@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import cast
 from uuid import uuid4
 
+from .game import LEGACY_COLOR_VALUES
 from .types import Attempt, Game, Stats
 
 
@@ -161,11 +162,20 @@ def get_stats() -> Stats:
 
 def _decode(row: sqlite3.Row) -> Game:
     """Convertit une ligne SQLite en structure de partie typée."""
+    mode = str(row["mode"])
+    secret = cast(list[str], json.loads(row["secret_json"]))
+    attempts = cast(list[Attempt], json.loads(row["attempts_json"]))
+    if mode == "colors":
+        secret = [LEGACY_COLOR_VALUES.get(value, value) for value in secret]
+        for attempt in attempts:
+            attempt["guess"] = [
+                LEGACY_COLOR_VALUES.get(value, value) for value in attempt["guess"]
+            ]
     return {
         "id": row["id"],
-        "mode": row["mode"],
-        "secret": cast(list[str], json.loads(row["secret_json"])),
-        "attempts": cast(list[Attempt], json.loads(row["attempts_json"])),
+        "mode": mode,
+        "secret": secret,
+        "attempts": attempts,
         "status": row["status"],
         "started_at": row["started_at"],
         "ended_at": row["ended_at"],

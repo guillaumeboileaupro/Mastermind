@@ -9,6 +9,9 @@ Deux modes utilisent la même logique Mastermind :
 - **Couleurs** : rouge, bleu, vert, jaune, violet, orange.
 - **Chiffres** : 1, 2, 3, 4, 5, 6.
 
+Les couleurs sont transmises et persistées directement sous forme de codes
+hexadécimaux CSS, sans identifiant textuel intermédiaire.
+
 Dans les deux modes :
 
 - le code secret contient **4 positions** ;

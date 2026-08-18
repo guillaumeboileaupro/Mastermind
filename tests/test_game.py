@@ -22,6 +22,14 @@ def test_generate_secret_uses_selected_mode() -> None:
     assert set(secret) <= allowed
 
 
+def test_color_mode_uses_hex_values_directly() -> None:
+    """Les couleurs utilisent leur code hexadécimal comme valeur de jeu."""
+    choices = MODES["colors"]["choices"]
+
+    assert all(choice["value"].startswith("#") for choice in choices)
+    assert all(set(choice) == {"value", "label"} for choice in choices)
+
+
 def test_generate_secret_rejects_unknown_mode() -> None:
     """La génération refuse un mode inconnu."""
     with pytest.raises(ValueError, match="Mode de jeu inconnu"):
@@ -84,10 +92,15 @@ def test_validate_guess_accepts_repeated_values() -> None:
     validate_guess("digits", ["1", "1", "6", "6"])
 
 
+def test_validate_guess_accepts_hex_colors() -> None:
+    """La validation accepte directement les codes des couleurs disponibles."""
+    validate_guess("colors", ["#ef4444", "#ef4444", "#3b82f6", "#22c55e"])
+
+
 def test_validate_guess_rejects_wrong_length() -> None:
     """La validation refuse une combinaison de mauvaise longueur."""
     with pytest.raises(ValueError):
-        validate_guess("colors", ["red", "blue"])
+        validate_guess("colors", ["#ef4444", "#3b82f6"])
 
 
 def test_validate_guess_rejects_unknown_choice() -> None:

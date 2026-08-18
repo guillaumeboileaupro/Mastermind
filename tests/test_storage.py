@@ -109,3 +109,18 @@ def test_get_game_returns_none_for_unknown_identifier(
 
     assert storage.get_game("missing") is None
     assert storage.get_stats()["games_total"] == 0
+
+
+def test_legacy_color_names_are_decoded_as_hex_values(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Les anciennes parties en noms de couleurs restent lisibles en hexadécimal."""
+    configure_database(tmp_path, monkeypatch)
+    game = storage.create_game(
+        "colors",
+        ["red", "blue", "green", "yellow"],
+        "2026-01-01T00:00:00+00:00",
+    )
+
+    assert game["secret"] == ["#ef4444", "#3b82f6", "#22c55e", "#eab308"]

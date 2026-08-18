@@ -5,16 +5,25 @@ from .types import FeedbackStatus, ModeDefinition
 
 CODE_LENGTH = 4
 
+LEGACY_COLOR_VALUES: dict[str, str] = {
+    "red": "#ef4444",
+    "blue": "#3b82f6",
+    "green": "#22c55e",
+    "yellow": "#eab308",
+    "purple": "#a855f7",
+    "orange": "#f97316",
+}
+
 MODES: dict[str, ModeDefinition] = {
     "colors": {
         "label": "Couleurs",
         "choices": [
-            {"value": "red", "label": "Rouge", "color": "#ef4444"},
-            {"value": "blue", "label": "Bleu", "color": "#3b82f6"},
-            {"value": "green", "label": "Vert", "color": "#22c55e"},
-            {"value": "yellow", "label": "Jaune", "color": "#eab308"},
-            {"value": "purple", "label": "Violet", "color": "#a855f7"},
-            {"value": "orange", "label": "Orange", "color": "#f97316"},
+            {"value": "#ef4444", "label": "Rouge"},
+            {"value": "#3b82f6", "label": "Bleu"},
+            {"value": "#22c55e", "label": "Vert"},
+            {"value": "#eab308", "label": "Jaune"},
+            {"value": "#a855f7", "label": "Violet"},
+            {"value": "#f97316", "label": "Orange"},
         ],
     },
     "digits": {
