@@ -1,4 +1,4 @@
-from typing_extensions import TypedDict
+from typing_extensions import NotRequired, TypedDict
 
 
 class Attempt(TypedDict):
@@ -38,15 +38,12 @@ class PublicGame(TypedDict):
 class Choice(TypedDict):
     value: str
     label: str
-
-
-class ColoredChoice(Choice):
-    color: str
+    color: NotRequired[str]
 
 
 class ModeDefinition(TypedDict):
     label: str
-    choices: list[Choice | ColoredChoice]
+    choices: list[Choice]
 
 
 class ModesResponse(TypedDict):

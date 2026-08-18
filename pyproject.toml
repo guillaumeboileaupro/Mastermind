@@ -1,0 +1,4 @@
+[tool.mypy]
+python_version = "3.10"
+strict = true
+files = ["app", "desktop.py", "tests"]
