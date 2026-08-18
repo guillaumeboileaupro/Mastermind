@@ -38,8 +38,48 @@
     color: #315c86;
 }
 
+.variant-rules-card {
+    grid-column: 1 / -1;
+    margin: 0 0 4px;
+    padding: 16px 0 18px !important;
+    border-left: 0 !important;
+    border-top: 2px solid #173b63;
+    background: transparent !important;
+}
+
+.variant-rules-card strong {
+    margin-bottom: 6px;
+    color: #173b63;
+    font-size: .98rem;
+}
+
+.variant-rules-card > p {
+    max-width: 680px;
+    margin-bottom: 12px;
+    color: #53606f;
+}
+
+.variant-rules-card ol {
+    display: grid;
+    gap: 7px;
+    margin: 0;
+    padding-left: 22px;
+    color: #445467;
+    font-size: .82rem;
+    line-height: 1.5;
+}
+
+.variant-rules-card li::marker {
+    color: #173b63;
+    font-weight: 750;
+}
+
 @media (max-width: 760px) {
     .control-pair {
         width: 100%;
+    }
+
+    .variant-rules-card {
+        grid-column: auto;
     }
 }
