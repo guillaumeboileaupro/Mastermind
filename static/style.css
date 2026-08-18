@@ -159,6 +159,7 @@ button.danger { color: #a83a32; }
     border: 1px solid transparent;
     border-radius: 50%;
     transition: transform .12s ease, border-color .12s ease, background .12s ease;
+    touch-action: none;
 }
 .guess-slot.filled { cursor: grab; }
 .guess-slot.filled:active { cursor: grabbing; }
@@ -202,6 +203,8 @@ button.danger { color: #a83a32; }
     padding: 0;
     transition: transform .12s ease, opacity .12s ease, border-color .12s ease;
     cursor: grab;
+    touch-action: none;
+    user-select: none;
 }
 .choice-button:active { cursor: grabbing; }
 .choice-button:hover { transform: translateY(-2px); border-color: rgba(31, 41, 51, .3); }

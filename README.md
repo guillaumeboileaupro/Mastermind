@@ -34,6 +34,8 @@ Exemple : `21` signifie 2 valeurs bien placées et 1 valeur correcte mal placée
 - génération d'un code secret ;
 - affichage graphique des 6 couleurs ;
 - interface web réactive intégrée dans la fenêtre desktop ;
+- placement par clic ou glisser-déposer à la souris et au tactile ;
+- réorganisation des pions posés par glisser-déposer ;
 - difficulté normale ou facile enfant avec un indice par position ;
 - validation des tentatives avec gestion correcte des doublons ;
 - reprise d'une partie active après redémarrage ;
@@ -190,5 +192,5 @@ python -m pytest -q
 ```
 
 Toutes les fonctions Python possèdent une docstring et des annotations de type.
-La CI exécute le contrôle statique strict avec `mypy` avant les **41 tests
+La CI exécute le contrôle statique strict avec `mypy` avant les **43 tests
 automatisés**.

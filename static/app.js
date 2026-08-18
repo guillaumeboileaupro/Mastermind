@@ -4,6 +4,7 @@ const state = {
     guess: [],
     receivedAt: Date.now(),
     suppressSlotClickUntil: 0,
+    pointerDrag: null,
 };
 
 const els = {
@@ -116,12 +117,70 @@ function addChoice(value) {
     renderCurrentGuess();
 }
 
-function dragPayload(event) {
-    try {
-        return JSON.parse(event.dataTransfer.getData("text/plain"));
-    } catch (_) {
-        return null;
+function clearDropTargets() {
+    document.querySelectorAll(".guess-slot.drop-target").forEach((slot) => {
+        slot.classList.remove("drop-target");
+    });
+}
+
+function slotAtPoint(clientX, clientY) {
+    return document.elementFromPoint(clientX, clientY)?.closest(".guess-slot") || null;
+}
+
+function startPointerDrag(event, source, payload) {
+    if (event.button !== 0 || !state.game || state.game.status !== "active") return;
+    state.pointerDrag = {
+        pointerId: event.pointerId,
+        source,
+        payload,
+        startX: event.clientX,
+        startY: event.clientY,
+        moved: false,
+    };
+    source.setPointerCapture(event.pointerId);
+}
+
+function movePointerDrag(event) {
+    const drag = state.pointerDrag;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    const distance = Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY);
+    if (!drag.moved && distance < 6) return;
+    drag.moved = true;
+    event.preventDefault();
+    drag.source.classList.add("dragging");
+    clearDropTargets();
+    slotAtPoint(event.clientX, event.clientY)?.classList.add("drop-target");
+}
+
+function finishPointerDrag(event) {
+    const drag = state.pointerDrag;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    state.pointerDrag = null;
+    drag.source.classList.remove("dragging");
+    const target = drag.moved ? slotAtPoint(event.clientX, event.clientY) : null;
+    clearDropTargets();
+    if (!target) return;
+
+    const targetIndex = Number(target.dataset.index);
+    if (!Number.isInteger(targetIndex)) return;
+    if (drag.payload.type === "palette") {
+        state.guess[targetIndex] = drag.payload.value;
+    } else if (drag.payload.type === "slot") {
+        const sourceIndex = drag.payload.index;
+        const targetValue = state.guess[targetIndex];
+        state.guess[targetIndex] = state.guess[sourceIndex];
+        state.guess[sourceIndex] = targetValue;
     }
+    state.suppressSlotClickUntil = Date.now() + 350;
+    renderCurrentGuess();
+}
+
+function cancelPointerDrag(event) {
+    const drag = state.pointerDrag;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    drag.source.classList.remove("dragging");
+    state.pointerDrag = null;
+    clearDropTargets();
 }
 
 function renderPalette() {
@@ -136,19 +195,18 @@ function renderPalette() {
         button.type = "button";
         button.title = `${choice.label} — cliquer ou glisser`;
         button.setAttribute("aria-label", choice.label);
-        button.draggable = true;
         if ((state.game?.mode || els.mode.value) === "colors") {
             button.style.background = choice.value;
         } else {
             button.textContent = choice.label;
         }
-        button.addEventListener("click", () => addChoice(choice.value));
-        button.addEventListener("dragstart", (event) => {
-            event.dataTransfer.effectAllowed = "copy";
-            event.dataTransfer.setData("text/plain", JSON.stringify({ type: "palette", value: choice.value }));
-            button.classList.add("dragging");
+        button.addEventListener("click", () => {
+            if (Date.now() < state.suppressSlotClickUntil) return;
+            addChoice(choice.value);
         });
-        button.addEventListener("dragend", () => button.classList.remove("dragging"));
+        button.addEventListener("pointerdown", (event) => {
+            startPointerDrag(event, button, { type: "palette", value: choice.value });
+        });
         els.palette.appendChild(button);
     });
 }
@@ -164,7 +222,6 @@ function renderCurrentGuess() {
 
         if (value) {
             slot.appendChild(renderToken(value, state.game?.mode || els.mode.value));
-            slot.draggable = true;
             slot.setAttribute("role", "button");
             slot.setAttribute("tabindex", "0");
             slot.setAttribute("aria-label", `Position ${index + 1}, cliquer pour retirer`);
@@ -180,15 +237,8 @@ function renderCurrentGuess() {
                     renderCurrentGuess();
                 }
             });
-            slot.addEventListener("dragstart", (event) => {
-                event.dataTransfer.effectAllowed = "move";
-                event.dataTransfer.setData("text/plain", JSON.stringify({ type: "slot", index, value }));
-                slot.classList.add("dragging");
-                state.suppressSlotClickUntil = Date.now() + 400;
-            });
-            slot.addEventListener("dragend", () => {
-                slot.classList.remove("dragging");
-                state.suppressSlotClickUntil = Date.now() + 200;
+            slot.addEventListener("pointerdown", (event) => {
+                startPointerDrag(event, slot, { type: "slot", index, value });
             });
         } else {
             const empty = document.createElement("span");
@@ -197,36 +247,14 @@ function renderCurrentGuess() {
             slot.appendChild(empty);
         }
 
-        slot.addEventListener("dragover", (event) => {
-            if (!state.game || state.game.status !== "active") return;
-            event.preventDefault();
-            event.dataTransfer.dropEffect = "move";
-            slot.classList.add("drop-target");
-        });
-        slot.addEventListener("dragleave", () => slot.classList.remove("drop-target"));
-        slot.addEventListener("drop", (event) => {
-            event.preventDefault();
-            slot.classList.remove("drop-target");
-            if (!state.game || state.game.status !== "active") return;
-            const payload = dragPayload(event);
-            if (!payload) return;
-
-            if (payload.type === "palette") {
-                state.guess[index] = payload.value;
-            } else if (payload.type === "slot" && Number.isInteger(payload.index)) {
-                const sourceIndex = payload.index;
-                const targetValue = state.guess[index];
-                state.guess[index] = state.guess[sourceIndex];
-                state.guess[sourceIndex] = targetValue;
-            }
-            state.suppressSlotClickUntil = Date.now() + 250;
-            renderCurrentGuess();
-        });
-
         els.currentGuess.appendChild(slot);
     }
     els.submit.disabled = !state.game || state.game.status !== "active" || !isGuessComplete();
 }
+
+document.addEventListener("pointermove", movePointerDrag, { passive: false });
+document.addEventListener("pointerup", finishPointerDrag);
+document.addEventListener("pointercancel", cancelPointerDrag);
 
 function renderAttemptToken(attempt, value, index) {
     if (!isEasyMode()) return renderToken(value, state.game.mode, true);
