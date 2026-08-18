@@ -50,3 +50,12 @@ def test_finished_color_code_is_rendered_as_tokens() -> None:
     assert "function renderFinishedMessage(prefix, suffix" in script
     assert "secret.appendChild(renderToken(value, state.game.mode, true))" in script
     assert 'state.game.secret.join(" · ")' not in script
+
+
+def test_select_controls_match_the_application_style() -> None:
+    """Les sélecteurs utilisent le style et la flèche propres à l'application."""
+    stylesheet = (STATIC_DIR / "style.css").read_text(encoding="utf-8")
+
+    assert "appearance: none" in stylesheet
+    assert "background-image: url(\"data:image/svg+xml" in stylesheet
+    assert "select:focus-visible" in stylesheet
