@@ -1,8 +1,3 @@
-:root,
-body {
-    background: #f5f7fa;
-}
-
 .variant-controls {
     align-items: center;
 }
@@ -14,12 +9,11 @@ body {
 }
 
 .variant-meta {
-    margin: -8px 0 22px;
-    padding: 10px 0 12px;
-    border-bottom: 1px solid #dde3ea;
-    color: #667085;
-    font-size: .86rem;
-    line-height: 1.45;
+    margin: 0;
+    padding: 12px 0 14px;
+    color: #687586;
+    font-size: .82rem;
+    line-height: 1.4;
 }
 
 .choice-button[data-has-color="true"],
@@ -29,27 +23,23 @@ body {
 
 .choice-button .choice-symbol,
 .token .choice-symbol {
-    font-size: 1.15em;
+    font-size: 1.08em;
     line-height: 1;
 }
 
 .feedback-higher,
 .feedback-lower {
-    border-color: #bfdbfe;
-    background: #eff6ff;
+    border-color: #bfd1e4;
+    background: #f3f7fb;
 }
 
 .feedback-higher .easy-feedback-label,
 .feedback-lower .easy-feedback-label {
-    color: #1d4ed8;
+    color: #315c86;
 }
 
 @media (max-width: 760px) {
     .control-pair {
         width: 100%;
-    }
-
-    .variant-meta {
-        margin-top: -2px;
     }
 }
