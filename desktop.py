@@ -42,7 +42,13 @@ def wait_for_server(port: int, timeout: float = 10.0) -> None:
 
 def configure_qt_identity() -> QApplication:
     """Force l'identité affichée par Ubuntu/Qt au lieu du nom desktop.py."""
-    qt_app = QApplication.instance() or QApplication(sys.argv)
+    instance = QApplication.instance()
+    if instance is None:
+        qt_app = QApplication(sys.argv)
+    elif isinstance(instance, QApplication):
+        qt_app = instance
+    else:
+        raise RuntimeError("Une application Qt incompatible est déjà active")
     qt_app.setApplicationName(APP_NAME)
     qt_app.setApplicationDisplayName(APP_NAME)
     qt_app.setDesktopFileName(DESKTOP_APP_ID)

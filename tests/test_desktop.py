@@ -6,6 +6,7 @@ from unittest.mock import MagicMock
 import pytest
 import uvicorn
 import webview
+from PyQt6.QtWidgets import QApplication
 
 import desktop
 
@@ -43,6 +44,22 @@ def test_wait_for_server_times_out() -> None:
         desktop.wait_for_server(port, timeout=0.01)
 
 
+def test_configure_qt_identity_reuses_application(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """L'identité Qt est appliquée à l'application graphique existante."""
+    qt_app = MagicMock(spec=QApplication)
+    monkeypatch.setattr(QApplication, "instance", staticmethod(lambda: qt_app))
+
+    configured = desktop.configure_qt_identity()
+
+    assert configured is qt_app
+    qt_app.setApplicationName.assert_called_once_with(desktop.APP_NAME)
+    qt_app.setApplicationDisplayName.assert_called_once_with(desktop.APP_NAME)
+    qt_app.setDesktopFileName.assert_called_once_with(desktop.DESKTOP_APP_ID)
+    qt_app.setOrganizationName.assert_called_once_with("Guillaume Boileau")
+
+
 def test_run_starts_and_stops_desktop_components(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -56,6 +73,7 @@ def test_run_starts_and_stops_desktop_components(
     create_window = MagicMock()
     start_webview = MagicMock()
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path))
+    monkeypatch.setattr(desktop, "configure_qt_identity", MagicMock())
     monkeypatch.setattr(desktop, "find_free_port", lambda: 8765)
     monkeypatch.setattr(desktop, "wait_for_server", lambda port: None)
     monkeypatch.setattr(uvicorn, "Config", MagicMock(return_value=config))
