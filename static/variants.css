@@ -1,0 +1,55 @@
+:root,
+body {
+    background: #f5f7fa;
+}
+
+.variant-controls {
+    align-items: center;
+}
+
+.control-pair {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.variant-meta {
+    margin: -8px 0 22px;
+    padding: 10px 0 12px;
+    border-bottom: 1px solid #dde3ea;
+    color: #667085;
+    font-size: .86rem;
+    line-height: 1.45;
+}
+
+.choice-button[data-has-color="true"],
+.token[data-has-color="true"] {
+    color: #111827;
+}
+
+.choice-button .choice-symbol,
+.token .choice-symbol {
+    font-size: 1.15em;
+    line-height: 1;
+}
+
+.feedback-higher,
+.feedback-lower {
+    border-color: #bfdbfe;
+    background: #eff6ff;
+}
+
+.feedback-higher .easy-feedback-label,
+.feedback-lower .easy-feedback-label {
+    color: #1d4ed8;
+}
+
+@media (max-width: 760px) {
+    .control-pair {
+        width: 100%;
+    }
+
+    .variant-meta {
+        margin-top: -2px;
+    }
+}
