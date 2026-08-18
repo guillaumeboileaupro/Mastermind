@@ -306,6 +306,28 @@ button.danger { color: #a83a32; }
     grid-template-columns: repeat(2, minmax(0, 1fr));
     border-top: 1px solid #e1e1dd;
 }
+
+.help-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    overflow-y: auto;
+    background: rgba(24, 31, 38, .76);
+}
+.help-overlay.visible { display: flex; animation: victory-fade .18s ease-out both; }
+.help-dialog {
+    width: min(760px, 100%);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    padding: 28px;
+    border: 1px solid #d7d7d2;
+    border-radius: 12px;
+    background: #fff;
+}
 .help-grid article {
     padding: 17px 18px 17px 0;
     border-bottom: 1px solid #e1e1dd;

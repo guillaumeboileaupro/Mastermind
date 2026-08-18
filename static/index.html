@@ -19,6 +19,40 @@
         </div>
     </div>
 
+    <div id="help-overlay" class="help-overlay" aria-hidden="true">
+        <section class="help-dialog" role="dialog" aria-modal="true" aria-labelledby="help-title">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Aide</p>
+                    <h2 id="help-title">Comment jouer ?</h2>
+                </div>
+                <button id="close-help" class="subtle" type="button">Fermer</button>
+            </div>
+            <div class="help-grid">
+                <article>
+                    <strong>1. Trouve le code</strong>
+                    <p>Le jeu choisit une combinaison secrète de 4 positions parmi 6 choix. Une même couleur ou un même chiffre peut apparaître plusieurs fois.</p>
+                </article>
+                <article>
+                    <strong>2. Propose une combinaison</strong>
+                    <p>Ajoute 4 pions par clic ou glisser-déposer, puis valide. Tu peux cliquer sur un pion posé pour le retirer avant de valider.</p>
+                </article>
+                <article>
+                    <strong>3. Lis le résultat</strong>
+                    <p>Le premier chiffre indique le nombre de valeurs bien placées. Le second indique les bonnes valeurs placées au mauvais endroit.</p>
+                </article>
+                <article>
+                    <strong>4. Gagne en moins de 10 essais</strong>
+                    <p>Un résultat <strong>40</strong> avant le 10e essai gagne la partie. Après 9 essais, tu peux continuer à chercher, mais la partie sera terminée hors limite et rapportera 0 point.</p>
+                </article>
+                <article class="easy-help-card">
+                    <strong>Facile enfant</strong>
+                    <p>Choisis <strong>Facile enfant</strong> dans « Difficulté ». Après chaque essai, le jeu indique pour chaque couleur si elle est bien placée, mal placée ou absente du code.</p>
+                </article>
+            </div>
+        </section>
+    </div>
+
     <main class="page">
         <header class="hero">
             <div class="brand">
@@ -37,6 +71,7 @@
                     <option value="normal">Normal</option>
                     <option value="easy">Facile enfant</option>
                 </select>
+                <button id="open-help" class="subtle" type="button">Aide</button>
                 <button id="new-game" class="primary">Nouvelle partie</button>
             </div>
         </header>
@@ -84,37 +119,6 @@
                 <span class="feedback-chip feedback-absent">✕ Absent</span>
             </div>
             <div id="attempts" class="attempts"></div>
-        </section>
-
-        <section class="panel help-panel" aria-labelledby="help-title">
-            <div class="section-heading">
-                <div>
-                    <p class="eyebrow">Aide</p>
-                    <h2 id="help-title">Comment jouer ?</h2>
-                </div>
-            </div>
-            <div class="help-grid">
-                <article>
-                    <strong>1. Trouve le code</strong>
-                    <p>Le jeu choisit une combinaison secrète de 4 positions parmi 6 choix. Une même couleur ou un même chiffre peut apparaître plusieurs fois.</p>
-                </article>
-                <article>
-                    <strong>2. Propose une combinaison</strong>
-                    <p>Ajoute 4 pions par clic ou glisser-déposer, puis valide. Tu peux cliquer sur un pion posé pour le retirer avant de valider.</p>
-                </article>
-                <article>
-                    <strong>3. Lis le résultat</strong>
-                    <p>Le premier chiffre indique le nombre de valeurs bien placées. Le second indique les bonnes valeurs placées au mauvais endroit.</p>
-                </article>
-                <article>
-                    <strong>4. Gagne en moins de 10 essais</strong>
-                    <p>Un résultat <strong>40</strong> avant le 10e essai gagne la partie. Après 9 essais, tu peux continuer à chercher, mais la partie sera terminée hors limite et rapportera 0 point.</p>
-                </article>
-                <article class="easy-help-card">
-                    <strong>Facile enfant</strong>
-                    <p>Choisis <strong>Facile enfant</strong> dans « Difficulté ». Après chaque essai, le jeu indique pour chaque couleur si elle est bien placée, mal placée ou absente du code.</p>
-                </article>
-            </div>
         </section>
 
         <section class="panel">

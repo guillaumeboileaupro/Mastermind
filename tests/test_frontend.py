@@ -19,3 +19,14 @@ def test_draggable_controls_disable_native_touch_gestures() -> None:
     stylesheet = (STATIC_DIR / "style.css").read_text(encoding="utf-8")
 
     assert stylesheet.count("touch-action: none") >= 2
+
+
+def test_help_is_opened_in_a_dialog() -> None:
+    """L'aide reste masquée jusqu'à l'activation du bouton dédié."""
+    page = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    script = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+
+    assert 'id="open-help"' in page
+    assert 'id="help-overlay" class="help-overlay" aria-hidden="true"' in page
+    assert 'role="dialog" aria-modal="true"' in page
+    assert 'els.openHelp.addEventListener("click", showHelp)' in script

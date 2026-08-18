@@ -31,6 +31,9 @@ const els = {
     victorySummary: document.querySelector("#victory-summary"),
     closeVictory: document.querySelector("#close-victory"),
     confetti: document.querySelector("#confetti"),
+    openHelp: document.querySelector("#open-help"),
+    helpOverlay: document.querySelector("#help-overlay"),
+    closeHelp: document.querySelector("#close-help"),
 };
 
 async function api(path, options = {}) {
@@ -390,6 +393,18 @@ function hideVictory() {
     els.confetti.innerHTML = "";
 }
 
+function showHelp() {
+    els.helpOverlay.classList.add("visible");
+    els.helpOverlay.setAttribute("aria-hidden", "false");
+    els.closeHelp.focus();
+}
+
+function hideHelp() {
+    els.helpOverlay.classList.remove("visible");
+    els.helpOverlay.setAttribute("aria-hidden", "true");
+    els.openHelp.focus();
+}
+
 async function loadStats() {
     const stats = await api("/api/stats");
     els.totalScore.textContent = String(stats.total_score);
@@ -517,11 +532,17 @@ els.difficulty.addEventListener("change", () => {
     }
 });
 els.closeVictory.addEventListener("click", hideVictory);
+els.openHelp.addEventListener("click", showHelp);
+els.closeHelp.addEventListener("click", hideHelp);
+els.helpOverlay.addEventListener("click", (event) => {
+    if (event.target === els.helpOverlay) hideHelp();
+});
 els.victoryOverlay.addEventListener("click", (event) => {
     if (event.target === els.victoryOverlay) hideVictory();
 });
 document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && els.victoryOverlay.classList.contains("visible")) hideVictory();
+    if (event.key === "Escape" && els.helpOverlay.classList.contains("visible")) hideHelp();
 });
 
 setInterval(updateClock, 1000);
