@@ -9,6 +9,19 @@ PACKAGE_ROOT="$BUILD_ROOT/mastermind_${VERSION}_${ARCH}"
 OUTPUT="$ROOT/dist/mastermind_${VERSION}_${ARCH}.deb"
 
 cd "$ROOT"
+
+if ! python3 -c 'import sys; raise SystemExit(sys.version_info < (3, 10))'; then
+    echo "Erreur : Python 3.10 ou une version plus récente est requis." >&2
+    echo "Recréez .venv avec : python3.10 -m venv .venv" >&2
+    exit 1
+fi
+
+if ! python3 -c 'import PyInstaller' 2>/dev/null; then
+    echo "Erreur : PyInstaller est absent de l'environnement Python actif." >&2
+    echo "Installez les dépendances avec : python -m pip install -r requirements-desktop.txt" >&2
+    exit 1
+fi
+
 rm -rf "$BUILD_ROOT" "$ROOT/build/mastermind" "$ROOT/dist/mastermind"
 mkdir -p "$ROOT/dist"
 
