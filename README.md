@@ -51,9 +51,17 @@ Exemple : `21` signifie 2 valeurs bien placées et 1 valeur correcte mal placée
 Le workflow **Build Ubuntu package** construit et publie comme artefact le
 paquet `mastermind_0.1.0_amd64.deb` à chaque modification de `main`.
 
-Après téléchargement du `.deb` :
+Après une construction locale depuis la racine du projet :
 
 ```bash
+sudo apt install ./dist/mastermind_0.1.0_amd64.deb
+```
+
+Pour un artefact téléchargé depuis GitHub Actions, utiliser son chemin réel, par
+exemple depuis le dossier de téléchargement :
+
+```bash
+cd ~/Téléchargements
 sudo apt install ./mastermind_0.1.0_amd64.deb
 ```
 
