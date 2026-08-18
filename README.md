@@ -1,6 +1,8 @@
 # Mastermind
 
-Jeu Mastermind avec **application desktop Ubuntu**, backend FastAPI et persistance SQLite.
+Jeu Mastermind avec **interface desktop PyQt6 entièrement en Python**, API
+FastAPI optionnelle et persistance SQLite. Le projet ne contient aucun code
+JavaScript.
 
 ## Modes de jeu
 
@@ -74,18 +76,6 @@ version utilisée avant de créer l'environnement :
 python3.10 --version
 ```
 
-### Version web
-
-```bash
-python3.10 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-uvicorn app.main:app --reload
-```
-
-Puis ouvrir `http://127.0.0.1:8000`.
-
 ### Version desktop
 
 ```bash
@@ -125,18 +115,15 @@ Une victoire démarre sur une base de 1000 points.
 Mastermind/
 ├── app/
 │   ├── game.py             # règles Mastermind et calcul du score
-│   ├── main.py             # API FastAPI + vue locale
+│   ├── main.py             # logique applicative + API FastAPI optionnelle
 │   ├── storage.py          # persistance SQLite utilisateur
 │   └── types.py            # structures de données strictement typées
 ├── static/
-│   ├── mastermind.svg      # logo / icône fourni
-│   ├── app.js
-│   ├── index.html
-│   └── style.css
+│   └── mastermind.svg      # logo / icône fourni
 ├── packaging/
 │   ├── build-deb.sh        # construction du paquet Ubuntu
 │   └── mastermind.desktop  # entrée du menu Applications
-├── desktop.py              # fenêtre desktop pywebview + serveur local
+├── desktop.py              # interface graphique PyQt6 native en Python
 ├── mastermind.spec         # configuration PyInstaller
 ├── pyproject.toml          # configuration mypy stricte
 ├── requirements-dev.txt    # dépendances des tests et du typage
@@ -167,5 +154,5 @@ python -m pytest -q
 ```
 
 Toutes les fonctions Python possèdent une docstring et des annotations de type.
-La CI exécute le contrôle statique strict avec `mypy` avant les 34 tests
+La CI exécute le contrôle statique strict avec `mypy` avant les tests
 automatisés.

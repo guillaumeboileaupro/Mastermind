@@ -1,2 +1,2 @@
--r requirements.txt
+-r requirements-desktop.txt
 mypy==1.17.1

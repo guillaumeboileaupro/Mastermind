@@ -1,13 +1,9 @@
-from PyInstaller.utils.hooks import collect_submodules
-
-hiddenimports = collect_submodules("uvicorn") + collect_submodules("webview")
-
 analysis = Analysis(
     ["desktop.py"],
     pathex=[],
     binaries=[],
-    datas=[("static", "static")],
-    hiddenimports=hiddenimports,
+    datas=[("static/mastermind.svg", "static")],
+    hiddenimports=[],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
