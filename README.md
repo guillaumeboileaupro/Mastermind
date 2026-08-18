@@ -95,7 +95,7 @@ bash packaging/build-deb.sh
 
 Le paquet est écrit dans `dist/`.
 
-La CI construit sous Ubuntu 20.04 afin de garder une base glibc compatible avec Ubuntu 20.04 et les versions plus récentes sur architecture x86-64.
+La CI construit avec Python 3.10 dans un conteneur Debian 11 (glibc 2.31). Cette base permet de viser Ubuntu 20.04 et les versions plus récentes sur architecture x86-64 tout en satisfaisant les versions Python requises par Uvicorn et pytest.
 
 ## Score
 

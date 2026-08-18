@@ -12,7 +12,7 @@ permissions:
 jobs:
   build-deb:
     runs-on: ubuntu-24.04
-    container: ubuntu:20.04
+    container: python:3.10-bullseye
     env:
       DEBIAN_FRONTEND: noninteractive
       VERSION: "0.1.0"
@@ -20,18 +20,18 @@ jobs:
       - name: Install build tools
         run: |
           apt-get update
-          apt-get install -y git python3 python3-pip python3-dev binutils dpkg-dev
+          apt-get install -y git binutils dpkg-dev
 
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Install Python build dependencies
         run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install -r requirements-desktop.txt
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-desktop.txt
 
       - name: Run tests
-        run: python3 -m pytest -q
+        run: python -m pytest -q
 
       - name: Build .deb
         run: bash packaging/build-deb.sh
