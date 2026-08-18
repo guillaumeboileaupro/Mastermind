@@ -230,6 +230,8 @@ button.danger { color: #a83a32; }
 }
 .guess-actions { justify-content: center; gap: 8px; flex-wrap: wrap; }
 .message { min-height: 22px; margin: 16px 0 0; text-align: center; font-weight: 600; color: #5f6872; }
+.message-secret { display: inline-flex; align-items: center; gap: 5px; vertical-align: middle; }
+.message-secret .token.small { width: 26px; height: 26px; flex-basis: 26px; }
 
 .attempts { display: grid; }
 .attempt-row {

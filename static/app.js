@@ -321,6 +321,17 @@ function renderAttempts() {
     });
 }
 
+function renderFinishedMessage(prefix, suffix = "") {
+    els.message.textContent = `${prefix} `;
+    const secret = document.createElement("span");
+    secret.className = "message-secret";
+    state.game.secret.forEach((value) => {
+        secret.appendChild(renderToken(value, state.game.mode, true));
+    });
+    els.message.appendChild(secret);
+    if (suffix) els.message.append(` ${suffix}`);
+}
+
 function renderGame() {
     state.receivedAt = Date.now();
     state.guess = blankGuess();
@@ -342,11 +353,11 @@ function renderGame() {
     renderAttempts();
 
     if (state.game.status === "won") {
-        els.message.textContent = `Gagné ! Code : ${state.game.secret.join(" · ")} — score ${state.game.score}`;
+        renderFinishedMessage("Gagné ! Code :", `— score ${state.game.score}`);
     } else if (state.game.status === "completed") {
         els.message.textContent = `Code trouvé hors limite. Il fallait réussir en moins de 10 essais.`;
     } else if (state.game.status === "lost") {
-        els.message.textContent = `Partie abandonnée. Code : ${state.game.secret.join(" · ")}`;
+        renderFinishedMessage("Partie abandonnée. Code :");
     } else if (state.game.status === "abandoned") {
         els.message.textContent = "Partie remplacée par une nouvelle partie.";
     } else if (isEasyMode()) {

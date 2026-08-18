@@ -41,3 +41,12 @@ def test_finished_game_asks_for_player_name() -> None:
     assert "async function savePlayerName()" in script
     assert 'method: "PUT"' in script
     assert '<th>Joueur</th>' in page
+
+
+def test_finished_color_code_is_rendered_as_tokens() -> None:
+    """Le message final affiche des pions plutôt que des codes hexadécimaux."""
+    script = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+
+    assert "function renderFinishedMessage(prefix, suffix" in script
+    assert "secret.appendChild(renderToken(value, state.game.mode, true))" in script
+    assert 'state.game.secret.join(" · ")' not in script
