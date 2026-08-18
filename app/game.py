@@ -2,6 +2,7 @@ from collections import Counter
 from random import SystemRandom
 
 from .types import FeedbackStatus, ModeDefinition
+from .variants import VARIANTS, get_variant, max_attempts_for
 
 CODE_LENGTH = 4
 MAX_WIN_ATTEMPTS = 10
@@ -39,21 +40,52 @@ MODES: dict[str, ModeDefinition] = {
 _rng = SystemRandom()
 
 
-def generate_secret(mode: str) -> list[str]:
-    """Génère un code secret aléatoire pour le mode demandé."""
-    if mode not in MODES:
-        raise ValueError("Mode de jeu inconnu")
-    values = [choice["value"] for choice in MODES[mode]["choices"]]
-    return [_rng.choice(values) for _ in range(CODE_LENGTH)]
+def _choices(mode: str) -> list[dict[str, str]]:
+    if mode in MODES:
+        return MODES[mode]["choices"]
+    variant = get_variant(mode)
+    if variant:
+        return variant["choices"]
+    raise ValueError("Mode de jeu inconnu")
 
 
-def validate_guess(mode: str, guess: list[str]) -> None:
-    """Vérifie qu'une proposition respecte le mode et la longueur du code."""
-    if mode not in MODES:
-        raise ValueError("Mode de jeu inconnu")
-    if len(guess) != CODE_LENGTH:
-        raise ValueError(f"La combinaison doit contenir {CODE_LENGTH} valeurs")
-    allowed = {choice["value"] for choice in MODES[mode]["choices"]}
+def allowed_code_lengths(mode: str) -> list[int]:
+    """Retourne les longueurs autorisées pour un mode ou une variante."""
+    if mode in MODES:
+        return [CODE_LENGTH]
+    variant = get_variant(mode)
+    if variant:
+        return variant["code_lengths"]
+    raise ValueError("Mode de jeu inconnu")
+
+
+def default_code_length(mode: str) -> int:
+    """Retourne la longueur par défaut d'un mode ou d'une variante."""
+    if mode in MODES:
+        return CODE_LENGTH
+    variant = get_variant(mode)
+    if variant:
+        return variant["default_code_length"]
+    raise ValueError("Mode de jeu inconnu")
+
+
+def generate_secret(mode: str, code_length: int | None = None) -> list[str]:
+    """Génère un code secret aléatoire pour le mode ou la variante demandé."""
+    values = [choice["value"] for choice in _choices(mode)]
+    length = code_length if code_length is not None else default_code_length(mode)
+    if length not in allowed_code_lengths(mode):
+        raise ValueError("Longueur de code invalide pour cette variante")
+    return [_rng.choice(values) for _ in range(length)]
+
+
+def validate_guess(mode: str, guess: list[str], code_length: int | None = None) -> None:
+    """Vérifie qu'une proposition respecte les choix et la longueur du jeu."""
+    length = code_length if code_length is not None else default_code_length(mode)
+    if length not in allowed_code_lengths(mode):
+        raise ValueError("Longueur de code invalide pour cette variante")
+    if len(guess) != length:
+        raise ValueError(f"La combinaison doit contenir {length} valeurs")
+    allowed = {choice["value"] for choice in _choices(mode)}
     if any(value not in allowed for value in guess):
         raise ValueError("La combinaison contient une valeur invalide")
 
@@ -79,6 +111,26 @@ def evaluate_guess_feedback(secret: list[str], guess: list[str]) -> list[Feedbac
     return feedback
 
 
+def evaluate_variant_feedback(
+    mode: str,
+    secret: list[str],
+    guess: list[str],
+) -> list[FeedbackStatus]:
+    """Applique le retour propre à la variante quand elle en définit un."""
+    variant = get_variant(mode)
+    if variant and variant.get("feedback_kind") == "alphabet":
+        feedback: list[FeedbackStatus] = []
+        for expected, actual in zip(secret, guess):
+            if expected == actual:
+                feedback.append("well_placed")
+            elif expected > actual:
+                feedback.append("higher")
+            else:
+                feedback.append("lower")
+        return feedback
+    return evaluate_guess_feedback(secret, guess)
+
+
 def evaluate_guess(secret: list[str], guess: list[str]) -> tuple[int, int]:
     """Compte les valeurs bien placées et mal placées d'une proposition."""
     feedback = evaluate_guess_feedback(secret, guess)
@@ -90,11 +142,32 @@ def compact_result(well_placed: int, misplaced: int) -> str:
     return f"{well_placed}{misplaced}"
 
 
-def calculate_score(attempt_count: int) -> int:
-    """Calcule le score final selon le nombre d'essais uniquement."""
-    return max(0, (MAX_WIN_ATTEMPTS + 1 - max(1, attempt_count)) * 100)
+def calculate_score(attempt_count: int, max_attempts: int = MAX_WIN_ATTEMPTS) -> int:
+    """Calcule le score final selon le nombre d'essais et la variante."""
+    return max(0, (max_attempts + 1 - max(1, attempt_count)) * 100)
 
 
-def live_score(attempt_count: int) -> int:
+def live_score(attempt_count: int, max_attempts: int = MAX_WIN_ATTEMPTS) -> int:
     """Calcule le score encore disponible avant la prochaine tentative."""
-    return max(0, MAX_SCORE - max(0, attempt_count) * 100)
+    return max(0, max_attempts * 100 - max(0, attempt_count) * 100)
+
+
+__all__ = [
+    "CODE_LENGTH",
+    "MAX_WIN_ATTEMPTS",
+    "MAX_SCORE",
+    "LEGACY_COLOR_VALUES",
+    "MODES",
+    "VARIANTS",
+    "allowed_code_lengths",
+    "calculate_score",
+    "compact_result",
+    "default_code_length",
+    "evaluate_guess",
+    "evaluate_guess_feedback",
+    "evaluate_variant_feedback",
+    "generate_secret",
+    "live_score",
+    "max_attempts_for",
+    "validate_guess",
+]
