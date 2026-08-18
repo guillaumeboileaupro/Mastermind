@@ -72,6 +72,7 @@ class VariantDefinition(TypedDict):
     max_attempts: int
     description: str
     note: str
+    rules: NotRequired[list[str]]
     feedback_kind: NotRequired[str]
 
 
