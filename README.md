@@ -64,12 +64,20 @@ Désinstaller le paquet ne supprime donc pas automatiquement l'historique person
 
 ## Lancer la version de développement
 
+Le projet nécessite **Python 3.10 ou une version plus récente**. Vérifier la
+version utilisée avant de créer l'environnement :
+
+```bash
+python3.10 --version
+```
+
 ### Version web
 
 ```bash
-python3 -m venv .venv
+python3.10 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
@@ -78,18 +86,20 @@ Puis ouvrir `http://127.0.0.1:8000`.
 ### Version desktop
 
 ```bash
-python3 -m venv .venv
+python3.10 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements-desktop.txt
+python -m pip install --upgrade pip
+python -m pip install -r requirements-desktop.txt
 python desktop.py
 ```
 
 ## Construire le paquet `.deb`
 
 ```bash
-python3 -m venv .venv
+python3.10 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements-desktop.txt
+python -m pip install --upgrade pip
+python -m pip install -r requirements-desktop.txt
 bash packaging/build-deb.sh
 ```
 
@@ -113,7 +123,8 @@ Mastermind/
 ├── app/
 │   ├── game.py             # règles Mastermind et calcul du score
 │   ├── main.py             # API FastAPI + vue locale
-│   └── storage.py          # persistance SQLite utilisateur
+│   ├── storage.py          # persistance SQLite utilisateur
+│   └── types.py            # structures de données strictement typées
 ├── static/
 │   ├── mastermind.svg      # logo / icône fourni
 │   ├── app.js
@@ -124,26 +135,34 @@ Mastermind/
 │   └── mastermind.desktop  # entrée du menu Applications
 ├── desktop.py              # fenêtre desktop pywebview + serveur local
 ├── mastermind.spec         # configuration PyInstaller
+├── pyproject.toml          # configuration mypy stricte
+├── requirements-dev.txt    # dépendances des tests et du typage
 ├── requirements-desktop.txt
 └── tests/
 ```
 
 ## API principale
 
-| Méthode | Route | Fonction |
-|---|---|---|
-| `GET` | `/api/modes` | règles, modes et choix disponibles |
-| `GET` | `/api/games/current` | partie active à reprendre |
-| `POST` | `/api/games` | démarrer une partie / changer de mode |
-| `POST` | `/api/games/{id}/guesses` | proposer une combinaison |
-| `POST` | `/api/games/{id}/give-up` | abandonner la partie |
-| `GET` | `/api/history` | historique des parties |
-| `GET` | `/api/stats` | statistiques et score total |
+| Méthode | Route                       | Fonction                               |
+| -------- | --------------------------- | -------------------------------------- |
+| `GET`   | `/api/modes`              | règles, modes et choix disponibles    |
+| `GET`   | `/api/games/current`      | partie active à reprendre             |
+| `POST`  | `/api/games`              | démarrer une partie / changer de mode |
+| `POST`  | `/api/games/{id}/guesses` | proposer une combinaison              |
+| `POST`  | `/api/games/{id}/give-up` | abandonner la partie                  |
+| `GET`   | `/api/history`            | historique des parties                |
+| `GET`   | `/api/stats`              | statistiques et score total           |
 
 Le code secret n'est jamais renvoyé par l'API pendant une partie active. Il devient visible uniquement quand la partie est terminée.
 
 ## Tests
 
 ```bash
-pytest -q
+python -m pip install -r requirements-dev.txt
+python -m mypy
+python -m pytest -q
 ```
+
+Toutes les fonctions Python possèdent une docstring et des annotations de type.
+La CI exécute le contrôle statique strict avec `mypy` avant les 34 tests
+automatisés.
