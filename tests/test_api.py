@@ -278,3 +278,23 @@ def test_finished_game_accepts_a_player_name(
     assert response.json()["player_name"] == "Alice Dupont"
     assert invalid.status_code == 400
     assert history[0]["player_name"] == "Alice Dupont"
+
+
+def test_scores_can_be_reset_from_api(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """La route de réinitialisation vide les scores terminés."""
+    use_test_database(tmp_path, monkeypatch)
+    with TestClient(app) as client:
+        game = cast(
+            PublicGame,
+            client.post("/api/games", json={"mode": "digits"}).json(),
+        )
+        client.post(f"/api/games/{game['id']}/give-up")
+
+        response = client.delete("/api/scores")
+
+        assert response.json() == {"deleted_games": 1}
+        assert client.get("/api/history").json() == []
+        assert client.get("/api/stats").json()["games_total"] == 0

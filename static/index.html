@@ -60,17 +60,16 @@
         </section>
     </div>
 
-    <main class="page">
-        <header class="hero">
-            <div class="brand">
-                <img class="app-logo" src="/static/mastermind.svg" alt="Logo Mastermind">
+    <div id="settings-overlay" class="settings-overlay" aria-hidden="true">
+        <aside class="settings-drawer" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+            <div class="section-heading">
                 <div>
-                    <p class="eyebrow">Jeu de logique</p>
-                    <h1>Mastermind</h1>
-                    <p id="rules-summary">Choisis une variante et trouve le code secret.</p>
+                    <p class="eyebrow">Menu</p>
+                    <h2 id="settings-title">Paramètres</h2>
                 </div>
+                <button id="close-settings" class="subtle" type="button">Fermer</button>
             </div>
-            <div class="controls variant-controls">
+            <div class="settings-fields">
                 <label for="mode">Variante</label>
                 <select id="mode" aria-label="Variante de Mastermind"></select>
                 <span id="code-length-group" class="control-pair" hidden>
@@ -82,7 +81,31 @@
                     <option value="normal">Normal</option>
                     <option value="easy">Facile enfant</option>
                 </select>
-                <button id="open-help" class="subtle" type="button">Aide</button>
+            </div>
+            <button id="open-help" class="settings-action" type="button">Aide et règles du jeu</button>
+            <div class="reset-zone">
+                <strong>Historique des scores</strong>
+                <p>Efface tous les scores et pseudonymes enregistrés. La partie en cours sera conservée.</p>
+                <button id="reset-scores" class="danger" type="button">Réinitialiser les scores</button>
+                <p id="reset-confirmation" class="reset-confirmation" role="status"></p>
+            </div>
+        </aside>
+    </div>
+
+    <main class="page">
+        <header class="hero">
+            <div class="brand">
+                <img class="app-logo" src="/static/mastermind.svg" alt="Logo Mastermind">
+                <div>
+                    <p class="eyebrow">Jeu de logique</p>
+                    <h1>Mastermind</h1>
+                    <p id="rules-summary">Choisis une variante et trouve le code secret.</p>
+                </div>
+            </div>
+            <div class="controls">
+                <button id="open-settings" class="menu-button" type="button" aria-label="Ouvrir les paramètres" aria-expanded="false">
+                    <span></span><span></span><span></span>
+                </button>
                 <button id="new-game" class="primary">Nouvelle partie</button>
             </div>
         </header>
