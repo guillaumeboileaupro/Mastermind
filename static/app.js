@@ -355,7 +355,7 @@ function renderGame() {
     if (state.game.status === "won") {
         renderFinishedMessage("Gagné ! Code :", `— score ${state.game.score}`);
     } else if (state.game.status === "completed") {
-        els.message.textContent = `Code trouvé hors limite. Il fallait réussir en moins de 10 essais.`;
+        els.message.textContent = `Code trouvé hors limite. Il fallait réussir en 10 essais maximum.`;
     } else if (state.game.status === "lost") {
         renderFinishedMessage("Partie abandonnée. Code :");
     } else if (state.game.status === "abandoned") {
@@ -376,7 +376,7 @@ function updateClock() {
     }
     els.timer.textContent = formatTime(elapsed);
     if (state.game.status === "active") {
-        const score = Math.max(0, 900 - state.game.attempts.length * 100);
+        const score = Math.max(0, 1000 - state.game.attempts.length * 100);
         els.currentScore.textContent = String(score);
     } else {
         els.currentScore.textContent = String(state.game.score || 0);

@@ -111,23 +111,24 @@ def test_validate_guess_rejects_unknown_choice() -> None:
 
 def test_score_rewards_low_attempt_win() -> None:
     """Le score final dépend uniquement du nombre d'essais."""
-    assert calculate_score(attempt_count=1) == 900
-    assert calculate_score(attempt_count=3) == 700
+    assert calculate_score(attempt_count=1) == 1000
+    assert calculate_score(attempt_count=3) == 800
 
 
 def test_score_is_zero_outside_win_limit() -> None:
     """Une combinaison trouvée après neuf essais ne rapporte aucun point."""
-    assert calculate_score(attempt_count=9) == 100
-    assert calculate_score(attempt_count=10) == 0
+    assert calculate_score(attempt_count=9) == 200
+    assert calculate_score(attempt_count=10) == 100
+    assert calculate_score(attempt_count=11) == 0
 
 
 def test_live_score_ignores_elapsed_time() -> None:
     """Le score provisoire applique uniquement la pénalité des essais."""
-    assert live_score(attempt_count=2) == 700
+    assert live_score(attempt_count=2) == 800
     assert live_score(attempt_count=20) == 0
 
 
 def test_score_ignores_negative_penalties() -> None:
     """Les compteurs négatifs ne créent pas de bonus artificiel."""
-    assert calculate_score(attempt_count=-1) == 900
-    assert live_score(attempt_count=-1) == 900
+    assert calculate_score(attempt_count=-1) == 1000
+    assert live_score(attempt_count=-1) == 1000

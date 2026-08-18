@@ -141,9 +141,9 @@ x86-64. Le workflow exécute les tests avant de produire et téléverser le paqu
 Le score dépend uniquement du nombre d'essais. Le chronomètre reste affiché à
 titre informatif et ne modifie jamais le score.
 
-- trouver le code du 1er au 9e essai rapporte respectivement de 900 à 100 points ;
-- la partie est gagnée uniquement si le code est trouvé en moins de 10 essais ;
-- après le 9e essai, le joueur peut continuer jusqu'à trouver le code ;
+- trouver le code du 1er au 10e essai rapporte respectivement de 1000 à 100 points ;
+- la partie est gagnée si le code est trouvé en 10 essais maximum ;
+- à partir du 11e essai, le joueur peut continuer jusqu'à trouver le code ;
 - une partie terminée hors limite rapporte 0 point et ne compte pas comme victoire ;
 - une partie abandonnée rapporte 0 point.
 
@@ -195,5 +195,5 @@ python -m pytest -q
 ```
 
 Toutes les fonctions Python possèdent une docstring et des annotations de type.
-La CI exécute le contrôle statique strict avec `mypy` avant les **49 tests
+La CI exécute le contrôle statique strict avec `mypy` avant les **50 tests
 automatisés**.

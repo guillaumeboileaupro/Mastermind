@@ -172,11 +172,11 @@ def test_missing_games_return_not_found(
     assert give_up.status_code == 404
 
 
-def test_player_can_finish_after_win_limit_without_scoring(
+def test_player_can_finish_after_tenth_attempt_without_scoring(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Après neuf échecs, le joueur peut finir sans obtenir une victoire."""
+    """Après dix échecs, le joueur peut finir sans obtenir une victoire."""
     use_test_database(tmp_path, monkeypatch)
 
     with TestClient(app) as client:
@@ -189,7 +189,7 @@ def test_player_can_finish_after_win_limit_without_scoring(
         secret = stored["secret"]
         wrong_guess = ["1" if value != "1" else "2" for value in secret]
 
-        for _ in range(9):
+        for _ in range(10):
             response = client.post(
                 f"/api/games/{game['id']}/guesses",
                 json={"guess": wrong_guess},
@@ -208,6 +208,38 @@ def test_player_can_finish_after_win_limit_without_scoring(
     assert completed["score"] == 0
     assert game_stats["games_total"] == 1
     assert game_stats["wins"] == 0
+
+
+def test_tenth_attempt_is_still_a_scoring_win(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Trouver le code au dixième essai compte encore comme une victoire."""
+    use_test_database(tmp_path, monkeypatch)
+
+    with TestClient(app) as client:
+        game = cast(
+            PublicGame,
+            client.post("/api/games", json={"mode": "digits"}).json(),
+        )
+        stored = storage.get_game(game["id"])
+        assert stored is not None
+        secret = stored["secret"]
+        wrong_guess = ["1" if value != "1" else "2" for value in secret]
+        for _ in range(9):
+            client.post(
+                f"/api/games/{game['id']}/guesses",
+                json={"guess": wrong_guess},
+            )
+
+        response = client.post(
+            f"/api/games/{game['id']}/guesses",
+            json={"guess": secret},
+        )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "won"
+    assert response.json()["score"] == 100
 
 
 def test_finished_game_accepts_a_player_name(

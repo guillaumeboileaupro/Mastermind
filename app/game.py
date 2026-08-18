@@ -4,8 +4,8 @@ from random import SystemRandom
 from .types import FeedbackStatus, ModeDefinition
 
 CODE_LENGTH = 4
-MAX_WIN_ATTEMPTS = 9
-MAX_SCORE = 900
+MAX_WIN_ATTEMPTS = 10
+MAX_SCORE = 1000
 
 LEGACY_COLOR_VALUES: dict[str, str] = {
     "red": "#ef4444",
