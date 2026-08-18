@@ -1,4 +1,8 @@
+from typing import Literal
+
 from typing_extensions import NotRequired, TypedDict
+
+FeedbackStatus = Literal["well_placed", "misplaced", "absent"]
 
 
 class Attempt(TypedDict):
@@ -7,6 +11,7 @@ class Attempt(TypedDict):
     well_placed: int
     misplaced: int
     result: str
+    feedback: NotRequired[list[FeedbackStatus]]
     created_at: str
 
 
