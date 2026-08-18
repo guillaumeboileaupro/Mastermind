@@ -41,6 +41,7 @@ def test_game_flow_persists_win_and_stats(
         finished = cast(PublicGame, response.json())
         assert finished["status"] == "won"
         assert finished["attempts"][0]["result"] == "40"
+        assert finished["attempts"][0]["feedback"] == ["well_placed"] * 4
         assert finished["secret"] == secret
         assert finished["score"] > 0
 
