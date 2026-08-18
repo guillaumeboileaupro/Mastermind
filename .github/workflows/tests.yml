@@ -8,6 +8,8 @@ on:
 jobs:
   pytest:
     runs-on: ubuntu-latest
+    env:
+      QT_QPA_PLATFORM: offscreen
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -18,11 +20,16 @@ jobs:
           python-version: "3.11"
           cache: pip
 
+      - name: Install Qt runtime libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1 libgl1 libxkbcommon-x11-0 libxcb-cursor0
+
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
 
       - name: Check types
-        run: mypy
+        run: python -m mypy
 
       - name: Run tests
-        run: pytest -q
+        run: python -m pytest -q

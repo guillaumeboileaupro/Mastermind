@@ -15,12 +15,13 @@ jobs:
     container: python:3.10-bullseye
     env:
       DEBIAN_FRONTEND: noninteractive
+      QT_QPA_PLATFORM: offscreen
       VERSION: "0.1.0"
     steps:
       - name: Install build tools
         run: |
           apt-get update
-          apt-get install -y git binutils dpkg-dev
+          apt-get install -y git binutils dpkg-dev libegl1 libgl1 libxkbcommon-x11-0 libxcb-cursor0
 
       - name: Checkout
         uses: actions/checkout@v4
