@@ -9,6 +9,10 @@ const state = {
 
 const els = {
     mode: document.querySelector("#mode"),
+    codeLength: document.querySelector("#code-length"),
+    codeLengthGroup: document.querySelector("#code-length-group"),
+    variantMeta: document.querySelector("#variant-meta"),
+    rulesSummary: document.querySelector("#rules-summary"),
     difficulty: document.querySelector("#difficulty"),
     newGame: document.querySelector("#new-game"),
     giveUp: document.querySelector("#give-up"),
@@ -66,31 +70,81 @@ function formatTime(totalSeconds) {
     return `${String(minutes).padStart(2, "0")}:${String(rest).padStart(2, "0")}`;
 }
 
-function modeConfig(mode = state.game?.mode || els.mode.value) {
-    return state.config?.modes?.[mode];
+function canonicalMode(mode) {
+    if (state.config?.variants?.[mode]) return mode;
+    if (mode === "colors") return "mastermind-1972";
+    if (mode === "digits") return "number-mastermind-1976";
+    return mode;
 }
 
-function choiceByValue(value, mode = state.game?.mode || els.mode.value) {
+function modeConfig(mode = state.game?.mode || els.mode.value) {
+    return state.config?.variants?.[mode]
+        || state.config?.modes?.[mode]
+        || state.config?.variants?.[canonicalMode(mode)];
+}
+
+function currentMode() {
+    return state.game?.status === "active" ? state.game.mode : els.mode.value;
+}
+
+function currentCodeLength() {
+    if (state.game) return state.game.code_length || state.config?.code_length || 4;
+    const config = modeConfig(els.mode.value);
+    return Number(els.codeLength?.value)
+        || config?.default_code_length
+        || state.config?.code_length
+        || 4;
+}
+
+function currentMaxAttempts() {
+    if (state.game) return state.game.max_attempts || 10;
+    return modeConfig(els.mode.value)?.max_attempts || 10;
+}
+
+function choiceByValue(value, mode = currentMode()) {
     return modeConfig(mode)?.choices.find((choice) => choice.value === value);
 }
 
 function blankGuess() {
-    return Array(state.config?.code_length || 4).fill(null);
+    return Array(currentCodeLength()).fill(null);
 }
 
 function isGuessComplete() {
-    return state.guess.length === state.config.code_length && state.guess.every(Boolean);
+    return state.guess.length === currentCodeLength() && state.guess.every(Boolean);
 }
 
 function isEasyMode() {
     return els.difficulty?.value === "easy";
 }
 
+function usesAlphabetFeedback(mode = state.game?.mode || els.mode.value) {
+    return modeConfig(mode)?.feedback_kind === "alphabet";
+}
+
 function feedbackLabel(status) {
     if (status === "well_placed") return { icon: "✓", text: "Bien placé" };
     if (status === "misplaced") return { icon: "↔", text: "Mal placé" };
     if (status === "absent") return { icon: "✕", text: "Absent" };
+    if (status === "higher") return { icon: "↑", text: "Plus tard" };
+    if (status === "lower") return { icon: "↓", text: "Plus tôt" };
     return { icon: "?", text: "Indice indisponible" };
+}
+
+function applyChoiceAppearance(element, choice) {
+    if (!choice) return;
+    const color = choice.color || (String(choice.value).startsWith("#") ? choice.value : null);
+    if (color) {
+        element.style.background = color;
+        element.dataset.hasColor = "true";
+    }
+    if (choice.symbol) {
+        const symbol = document.createElement("span");
+        symbol.className = "choice-symbol";
+        symbol.textContent = choice.symbol;
+        element.appendChild(symbol);
+    } else if (!color) {
+        element.textContent = choice.label;
+    }
 }
 
 function renderToken(value, mode, small = false) {
@@ -98,23 +152,47 @@ function renderToken(value, mode, small = false) {
     const token = document.createElement("span");
     token.className = `token${small ? " small" : ""}`;
     token.title = choice?.label || value;
-    if (mode === "colors" && choice) {
-        token.style.background = choice.value;
-        token.setAttribute("aria-label", choice.label);
-    } else {
-        token.textContent = choice?.label || value;
-    }
+    token.setAttribute("aria-label", choice?.label || value);
+    if (choice) applyChoiceAppearance(token, choice);
+    else token.textContent = value;
     return token;
 }
 
 function renderModeSelector() {
     els.mode.innerHTML = "";
-    Object.entries(state.config.modes).forEach(([key, config]) => {
+    Object.entries(state.config.variants || {}).forEach(([key, config]) => {
         const option = document.createElement("option");
         option.value = key;
-        option.textContent = config.label;
+        option.textContent = `${config.label} · ${config.year}`;
         els.mode.appendChild(option);
     });
+}
+
+function renderVariantControls() {
+    const config = modeConfig(els.mode.value);
+    if (!config) return;
+    const lengths = config.code_lengths || [state.config.code_length || 4];
+    const previous = Number(els.codeLength.value);
+    els.codeLength.innerHTML = "";
+    lengths.forEach((length) => {
+        const option = document.createElement("option");
+        option.value = String(length);
+        option.textContent = `${length} positions`;
+        els.codeLength.appendChild(option);
+    });
+    const preferred = lengths.includes(previous) ? previous : config.default_code_length || lengths[0];
+    els.codeLength.value = String(preferred);
+    els.codeLengthGroup.hidden = lengths.length <= 1;
+    const attempts = config.max_attempts || 10;
+    els.variantMeta.textContent = `${config.description || ""} ${config.note || ""}`.trim();
+    els.rulesSummary.textContent = `${preferred} positions · ${config.choices.length} choix · ${attempts} essais avec score.`;
+    if (!state.game || state.game.status !== "active") {
+        state.game = null;
+        state.guess = blankGuess();
+        renderPalette();
+        renderCurrentGuess();
+        renderAttempts();
+    }
 }
 
 function addChoice(value) {
@@ -193,9 +271,11 @@ function cancelPointerDrag(event) {
 
 function renderPalette() {
     els.palette.innerHTML = "";
-    const config = modeConfig();
+    const mode = currentMode();
+    const config = modeConfig(mode);
     if (!config) return;
-    els.modeTitle.textContent = `Mode ${config.label} — choisis 4 valeurs`;
+    const length = currentCodeLength();
+    els.modeTitle.textContent = `${config.label} — choisis ${length} valeurs`;
 
     config.choices.forEach((choice) => {
         const button = document.createElement("button");
@@ -203,11 +283,7 @@ function renderPalette() {
         button.type = "button";
         button.title = `${choice.label} — cliquer ou glisser`;
         button.setAttribute("aria-label", choice.label);
-        if ((state.game?.mode || els.mode.value) === "colors") {
-            button.style.background = choice.value;
-        } else {
-            button.textContent = choice.label;
-        }
+        applyChoiceAppearance(button, choice);
         button.addEventListener("click", () => {
             if (Date.now() < state.suppressSlotClickUntil) return;
             addChoice(choice.value);
@@ -221,7 +297,9 @@ function renderPalette() {
 
 function renderCurrentGuess() {
     els.currentGuess.innerHTML = "";
-    for (let index = 0; index < state.config.code_length; index += 1) {
+    const length = currentCodeLength();
+    if (state.guess.length !== length) state.guess = Array(length).fill(null);
+    for (let index = 0; index < length; index += 1) {
         const value = state.guess[index];
         const slot = document.createElement("div");
         slot.className = `guess-slot${value ? " filled" : ""}`;
@@ -229,7 +307,7 @@ function renderCurrentGuess() {
         slot.title = value ? "Cliquer pour enlever, ou glisser pour déplacer" : "Dépose un pion ici";
 
         if (value) {
-            slot.appendChild(renderToken(value, state.game?.mode || els.mode.value));
+            slot.appendChild(renderToken(value, currentMode()));
             slot.setAttribute("role", "button");
             slot.setAttribute("tabindex", "0");
             slot.setAttribute("aria-label", `Position ${index + 1}, cliquer pour retirer`);
@@ -254,7 +332,6 @@ function renderCurrentGuess() {
             empty.textContent = "?";
             slot.appendChild(empty);
         }
-
         els.currentGuess.appendChild(slot);
     }
     els.submit.disabled = !state.game || state.game.status !== "active" || !isGuessComplete();
@@ -265,14 +342,14 @@ document.addEventListener("pointerup", finishPointerDrag);
 document.addEventListener("pointercancel", cancelPointerDrag);
 
 function renderAttemptToken(attempt, value, index) {
-    if (!isEasyMode()) return renderToken(value, state.game.mode, true);
+    const showHint = isEasyMode() || usesAlphabetFeedback(state.game?.mode);
+    if (!showHint) return renderToken(value, state.game.mode, true);
 
     const status = attempt.feedback?.[index];
     const label = feedbackLabel(status);
     const wrapper = document.createElement("span");
     wrapper.className = `easy-feedback feedback-${status || "unknown"}`;
     wrapper.title = `${choiceByValue(value, state.game.mode)?.label || value} : ${label.text}`;
-
     wrapper.appendChild(renderToken(value, state.game.mode, true));
 
     const hint = document.createElement("small");
@@ -284,23 +361,28 @@ function renderAttemptToken(attempt, value, index) {
 
 function renderAttempts() {
     els.attempts.innerHTML = "";
-    if (els.easyLegend) els.easyLegend.hidden = !isEasyMode();
+    const alphabet = usesAlphabetFeedback(state.game?.mode);
+    if (els.easyLegend) els.easyLegend.hidden = !isEasyMode() || alphabet;
 
     const attempts = state.game?.attempts || [];
     if (!attempts.length) {
         els.attempts.innerHTML = '<p class="empty-state">Aucune tentative pour le moment.</p>';
-        els.scoreHelp.textContent = isEasyMode()
-            ? "En mode facile, chaque pion recevra un indice après validation."
-            : "Aucune tentative pour le moment.";
+        els.scoreHelp.textContent = alphabet
+            ? "Les flèches indiqueront si chaque lettre secrète est plus tôt ou plus tard dans l’alphabet."
+            : isEasyMode()
+                ? "En mode facile, chaque pion recevra un indice après validation."
+                : "Aucune tentative pour le moment.";
         return;
     }
 
     const latest = attempts[attempts.length - 1];
-    els.scoreHelp.textContent = `Ton résultat : ${latest.result} — ${latest.well_placed} bien placée(s), ${latest.misplaced} mal placée(s).`;
+    els.scoreHelp.textContent = alphabet
+        ? `${latest.well_placed} lettre(s) exactement placée(s) — suis les flèches sous les autres lettres.`
+        : `Ton résultat : ${latest.result} — ${latest.well_placed} bien placée(s), ${latest.misplaced} mal placée(s).`;
 
     [...attempts].reverse().forEach((attempt) => {
         const row = document.createElement("div");
-        row.className = `attempt-row${isEasyMode() ? " easy-attempt" : ""}`;
+        row.className = `attempt-row${(isEasyMode() || alphabet) ? " easy-attempt" : ""}`;
 
         const number = document.createElement("strong");
         number.textContent = `#${attempt.number}`;
@@ -308,15 +390,18 @@ function renderAttempts() {
 
         const tokens = document.createElement("div");
         tokens.className = "attempt-tokens";
-        attempt.guess.forEach((value, index) => tokens.appendChild(renderAttemptToken(attempt, value, index)));
+        attempt.guess.forEach((value, index) => {
+            tokens.appendChild(renderAttemptToken(attempt, value, index));
+        });
         row.appendChild(tokens);
 
         const result = document.createElement("span");
         result.className = "result-badge";
-        result.textContent = attempt.result;
-        result.title = `${attempt.well_placed} bien placée(s), ${attempt.misplaced} mal placée(s)`;
+        result.textContent = alphabet ? `${latest.well_placed}/${state.game.code_length}` : attempt.result;
+        result.title = alphabet
+            ? `${attempt.well_placed} position(s) exacte(s)`
+            : `${attempt.well_placed} bien placée(s), ${attempt.misplaced} mal placée(s)`;
         row.appendChild(result);
-
         els.attempts.appendChild(row);
     });
 }
@@ -336,7 +421,7 @@ function renderGame() {
     state.receivedAt = Date.now();
     state.guess = blankGuess();
     if (!state.game) {
-        els.message.textContent = "Aucune partie en cours. Choisis un mode et lance une partie.";
+        els.message.textContent = "Choisis une variante puis lance une partie.";
         els.timer.textContent = "00:00";
         els.currentScore.textContent = "0";
         els.giveUp.disabled = true;
@@ -346,7 +431,11 @@ function renderGame() {
         return;
     }
 
-    els.mode.value = state.game.mode;
+    const selectable = canonicalMode(state.game.mode);
+    if (state.config.variants?.[selectable]) els.mode.value = selectable;
+    const config = modeConfig(state.game.mode);
+    els.rulesSummary.textContent = `${state.game.code_length} positions · ${config?.choices.length || "?"} choix · ${state.game.max_attempts} essais avec score.`;
+    els.variantMeta.textContent = `${config?.description || ""} ${config?.note || ""}`.trim();
     els.giveUp.disabled = state.game.status !== "active";
     renderPalette();
     renderCurrentGuess();
@@ -355,11 +444,13 @@ function renderGame() {
     if (state.game.status === "won") {
         renderFinishedMessage("Gagné ! Code :", `— score ${state.game.score}`);
     } else if (state.game.status === "completed") {
-        els.message.textContent = `Code trouvé hors limite. Il fallait réussir en 10 essais maximum.`;
+        els.message.textContent = `Code trouvé hors limite. Il fallait réussir en ${state.game.max_attempts} essais maximum.`;
     } else if (state.game.status === "lost") {
         renderFinishedMessage("Partie abandonnée. Code :");
     } else if (state.game.status === "abandoned") {
         els.message.textContent = "Partie remplacée par une nouvelle partie.";
+    } else if (usesAlphabetFeedback(state.game.mode)) {
+        els.message.textContent = "Utilise les flèches pour te rapprocher des lettres secrètes.";
     } else if (isEasyMode()) {
         els.message.textContent = "Mode facile enfant : après chaque essai, regarde l'indice sous chaque pion.";
     } else {
@@ -376,7 +467,7 @@ function updateClock() {
     }
     els.timer.textContent = formatTime(elapsed);
     if (state.game.status === "active") {
-        const score = Math.max(0, 1000 - state.game.attempts.length * 100);
+        const score = Math.max(0, currentMaxAttempts() * 100 - state.game.attempts.length * 100);
         els.currentScore.textContent = String(score);
     } else {
         els.currentScore.textContent = String(state.game.score || 0);
@@ -397,7 +488,7 @@ function showEndDialog() {
     els.playerError.textContent = "";
     els.confetti.innerHTML = "";
     if (won) {
-        const colors = ["#ef4444", "#3b82f6", "#22c55e", "#eab308", "#a855f7", "#f97316"];
+        const colors = ["#ef4444", "#3b82f6", "#22c55e", "#eab308", "#8b5cf6", "#f97316"];
         for (let index = 0; index < 70; index += 1) {
             const piece = document.createElement("span");
             piece.className = "confetti-piece";
@@ -471,7 +562,8 @@ async function loadHistory() {
 
     history.forEach((game) => {
         const row = document.createElement("tr");
-        const label = state.config.modes[game.mode]?.label || game.mode;
+        const config = modeConfig(game.mode);
+        const label = config?.label || game.mode;
         const status = game.status === "won"
             ? "Gagnée"
             : game.status === "completed"
@@ -498,7 +590,10 @@ async function startGame() {
         hideVictory();
         state.game = await api("/api/games", {
             method: "POST",
-            body: JSON.stringify({ mode: els.mode.value }),
+            body: JSON.stringify({
+                mode: els.mode.value,
+                code_length: Number(els.codeLength.value) || undefined,
+            }),
         });
         renderGame();
         await Promise.all([loadStats(), loadHistory()]);
@@ -517,8 +612,8 @@ async function submitGuess() {
         renderGame();
         if (state.game.status !== "active") {
             await Promise.all([loadStats(), loadHistory()]);
+            showEndDialog();
         }
-        if (state.game.status !== "active") showEndDialog();
     } catch (error) {
         els.message.textContent = error.message;
     }
@@ -539,14 +634,19 @@ async function giveUp() {
 async function init() {
     try {
         state.config = await api("/api/modes");
-        state.guess = blankGuess();
         renderModeSelector();
+        if (state.config.variants?.["mastermind-1972"]) els.mode.value = "mastermind-1972";
+        renderVariantControls();
         const savedDifficulty = localStorage.getItem("mastermind-difficulty");
         if (savedDifficulty === "easy" || savedDifficulty === "normal") {
             els.difficulty.value = savedDifficulty;
         }
         state.game = await api("/api/games/current");
-        if (state.game) els.mode.value = state.game.mode;
+        if (state.game) {
+            const selectable = canonicalMode(state.game.mode);
+            if (state.config.variants?.[selectable]) els.mode.value = selectable;
+        }
+        state.guess = blankGuess();
         renderGame();
         await Promise.all([loadStats(), loadHistory()]);
     } catch (error) {
@@ -570,14 +670,23 @@ els.clear.addEventListener("click", () => {
     state.guess = blankGuess();
     renderCurrentGuess();
 });
-els.mode.addEventListener("change", renderPalette);
+els.mode.addEventListener("change", renderVariantControls);
+els.codeLength.addEventListener("change", () => {
+    if (!state.game || state.game.status !== "active") {
+        state.game = null;
+        state.guess = blankGuess();
+        renderVariantControls();
+    }
+});
 els.difficulty.addEventListener("change", () => {
     localStorage.setItem("mastermind-difficulty", els.difficulty.value);
     renderAttempts();
     if (state.game?.status === "active") {
-        els.message.textContent = isEasyMode()
-            ? "Mode facile enfant : après chaque essai, regarde l'indice sous chaque pion."
-            : "Trouve la combinaison secrète.";
+        els.message.textContent = usesAlphabetFeedback(state.game.mode)
+            ? "Utilise les flèches pour te rapprocher des lettres secrètes."
+            : isEasyMode()
+                ? "Mode facile enfant : après chaque essai, regarde l'indice sous chaque pion."
+                : "Trouve la combinaison secrète.";
     }
 });
 els.closeVictory.addEventListener("click", hideVictory);
