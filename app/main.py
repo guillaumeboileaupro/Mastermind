@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
+import re
 from typing import AsyncIterator
 
 from fastapi import FastAPI, HTTPException, Query
@@ -29,6 +30,7 @@ from .storage import (
     init_db,
     list_history,
     save_attempts,
+    set_player_name,
 )
 from .types import Attempt, Game, ModesResponse, PublicGame, Stats
 
@@ -70,6 +72,7 @@ def public_game(game: Game) -> PublicGame:
         "score": game["score"],
         "current_score": live_score(len(game["attempts"])) if active else game["score"],
         "secret": None if active else game["secret"],
+        "player_name": game["player_name"],
     }
 
 
@@ -90,6 +93,10 @@ class NewGameRequest(BaseModel):
 
 class GuessRequest(BaseModel):
     guess: list[str]
+
+
+class PlayerNameRequest(BaseModel):
+    player_name: str
 
 
 @app.get("/")
@@ -216,6 +223,33 @@ def give_up(game_id: str) -> PublicGame:
 def history(limit: int = Query(default=50, ge=1, le=200)) -> list[PublicGame]:
     """Retourne l'historique public des parties terminées."""
     return [public_game(game) for game in list_history(limit)]
+
+
+@app.put("/api/games/{game_id}/player")
+def save_player_name(game_id: str, payload: PlayerNameRequest) -> PublicGame:
+    """Enregistre le pseudonyme d'une partie terminée."""
+    game = get_game(game_id)
+    if not game:
+        raise HTTPException(status_code=404, detail="Partie introuvable")
+    player_name = " ".join(payload.player_name.split())
+    if not 1 <= len(player_name) <= 20:
+        raise HTTPException(
+            status_code=400,
+            detail="Le pseudonyme doit contenir entre 1 et 20 caractères",
+        )
+    if not re.fullmatch(r"[\w -]+", player_name, flags=re.UNICODE):
+        raise HTTPException(
+            status_code=400,
+            detail="Le pseudonyme accepte uniquement lettres, chiffres, espaces, _ et -",
+        )
+    try:
+        set_player_name(game_id, player_name)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    updated = get_game(game_id)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Partie introuvable")
+    return public_game(updated)
 
 
 @app.get("/api/stats")

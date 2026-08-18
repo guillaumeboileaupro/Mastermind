@@ -7,7 +7,7 @@
 
 * { box-sizing: border-box; }
 body { margin: 0; min-height: 100vh; background: #f7f7f4; }
-button, select { font: inherit; }
+button, select, input { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: .42; }
 
@@ -77,6 +77,17 @@ select, button {
     color: #1f2933;
     padding: 7px 11px;
 }
+.player-label { display: block; margin-bottom: 7px; text-align: left; font-weight: 650; }
+#player-name {
+    width: 100%;
+    min-height: 40px;
+    border: 1px solid #cfcfca;
+    border-radius: 7px;
+    padding: 8px 10px;
+}
+#player-name:focus { outline: 2px solid #294663; outline-offset: 2px; }
+.player-error { min-height: 20px; margin: 6px 0; color: #a83a32; text-align: left; font-size: .82rem; }
+.end-actions { display: flex; justify-content: flex-end; gap: 8px; }
 select:hover, button:hover:not(:disabled) { border-color: #9ca3af; }
 select:focus-visible, button:focus-visible {
     outline: 2px solid #294663;

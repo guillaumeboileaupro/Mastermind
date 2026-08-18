@@ -111,6 +111,62 @@ def test_get_game_returns_none_for_unknown_identifier(
     assert storage.get_stats()["games_total"] == 0
 
 
+def test_player_name_is_saved_only_for_finished_game(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Un pseudonyme ne peut être associé qu'à une partie terminée."""
+    configure_database(tmp_path, monkeypatch)
+    game = storage.create_game("digits", ["1"] * 4, "2026-01-01T00:00:00+00:00")
+
+    with pytest.raises(ValueError, match="terminée"):
+        storage.set_player_name(game["id"], "Alice")
+
+    storage.finish_game(
+        game["id"],
+        status="won",
+        ended_at="2026-01-01T00:00:05+00:00",
+        duration_seconds=5,
+        score=900,
+    )
+    storage.set_player_name(game["id"], "Alice")
+
+    finished = storage.get_game(game["id"])
+    assert finished is not None
+    assert finished["player_name"] == "Alice"
+
+
+def test_init_db_adds_player_name_to_existing_database(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """L'initialisation migre une ancienne base sans perdre ses parties."""
+    database = tmp_path / "legacy.db"
+    monkeypatch.setattr(storage, "DB_PATH", database)
+    with storage._connect() as connection:
+        connection.execute(
+            """
+            CREATE TABLE games (
+                id TEXT PRIMARY KEY,
+                mode TEXT NOT NULL,
+                secret_json TEXT NOT NULL,
+                attempts_json TEXT NOT NULL DEFAULT '[]',
+                status TEXT NOT NULL,
+                started_at TEXT NOT NULL,
+                ended_at TEXT,
+                duration_seconds INTEGER NOT NULL DEFAULT 0,
+                score INTEGER NOT NULL DEFAULT 0
+            )
+            """
+        )
+
+    storage.init_db()
+
+    with storage._connect() as connection:
+        columns = {row["name"] for row in connection.execute("PRAGMA table_info(games)")}
+    assert "player_name" in columns
+
+
 def test_legacy_color_names_are_decoded_as_hex_values(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

@@ -12,10 +12,16 @@
     <div id="victory-overlay" class="victory-overlay" aria-hidden="true">
         <div id="confetti" class="confetti" aria-hidden="true"></div>
         <div class="victory-card" role="status" aria-live="polite">
-            <p class="eyebrow">Victoire</p>
-            <h2>Combinaison trouvée !</h2>
+            <p id="end-label" class="eyebrow">Partie terminée</p>
+            <h2 id="end-title">Résultat</h2>
             <p id="victory-summary"></p>
-            <button id="close-victory" class="primary" type="button">Continuer</button>
+            <label class="player-label" for="player-name">Ton pseudonyme</label>
+            <input id="player-name" type="text" maxlength="20" autocomplete="nickname" placeholder="Entre ton pseudonyme">
+            <p id="player-error" class="player-error" role="alert"></p>
+            <div class="end-actions">
+                <button id="close-victory" class="subtle" type="button">Plus tard</button>
+                <button id="save-player" class="primary" type="button">Enregistrer</button>
+            </div>
         </div>
     </div>
 
@@ -133,6 +139,7 @@
                     <thead>
                         <tr>
                             <th>Mode</th>
+                            <th>Joueur</th>
                             <th>Résultat</th>
                             <th>Essais</th>
                             <th>Temps</th>

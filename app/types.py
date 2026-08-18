@@ -25,6 +25,7 @@ class Game(TypedDict):
     ended_at: str | None
     duration_seconds: int
     score: int
+    player_name: str | None
 
 
 class PublicGame(TypedDict):
@@ -38,6 +39,7 @@ class PublicGame(TypedDict):
     score: int
     current_score: int
     secret: list[str] | None
+    player_name: str | None
 
 
 class Choice(TypedDict):

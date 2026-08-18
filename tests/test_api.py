@@ -208,3 +208,41 @@ def test_player_can_finish_after_win_limit_without_scoring(
     assert completed["score"] == 0
     assert game_stats["games_total"] == 1
     assert game_stats["wins"] == 0
+
+
+def test_finished_game_accepts_a_player_name(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Le pseudonyme validé apparaît dans l'historique des scores."""
+    use_test_database(tmp_path, monkeypatch)
+
+    with TestClient(app) as client:
+        game = cast(
+            PublicGame,
+            client.post("/api/games", json={"mode": "digits"}).json(),
+        )
+        assert client.put(
+            f"/api/games/{game['id']}/player",
+            json={"player_name": "Alice"},
+        ).status_code == 409
+        stored = storage.get_game(game["id"])
+        assert stored is not None
+        client.post(
+            f"/api/games/{game['id']}/guesses",
+            json={"guess": stored["secret"]},
+        )
+        response = client.put(
+            f"/api/games/{game['id']}/player",
+            json={"player_name": "  Alice  Dupont  "},
+        )
+        invalid = client.put(
+            f"/api/games/{game['id']}/player",
+            json={"player_name": "<script>"},
+        )
+        history = cast(list[PublicGame], client.get("/api/history").json())
+
+    assert response.status_code == 200
+    assert response.json()["player_name"] == "Alice Dupont"
+    assert invalid.status_code == 400
+    assert history[0]["player_name"] == "Alice Dupont"

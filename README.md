@@ -44,6 +44,7 @@ Exemple : `21` signifie 2 valeurs bien placées et 1 valeur correcte mal placée
 - score courant et score final ;
 - score total cumulé ;
 - historique persistant des parties ;
+- pseudonyme enregistrable en fin de partie et affiché dans l'historique des scores ;
 - nombre de victoires ;
 - abandon d'une partie ;
 - changement de mode en démarrant une nouvelle partie.
@@ -193,5 +194,5 @@ python -m pytest -q
 ```
 
 Toutes les fonctions Python possèdent une docstring et des annotations de type.
-La CI exécute le contrôle statique strict avec `mypy` avant les **44 tests
+La CI exécute le contrôle statique strict avec `mypy` avant les **48 tests
 automatisés**.

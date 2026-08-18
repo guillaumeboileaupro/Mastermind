@@ -31,6 +31,11 @@ const els = {
     victorySummary: document.querySelector("#victory-summary"),
     closeVictory: document.querySelector("#close-victory"),
     confetti: document.querySelector("#confetti"),
+    endLabel: document.querySelector("#end-label"),
+    endTitle: document.querySelector("#end-title"),
+    playerName: document.querySelector("#player-name"),
+    playerError: document.querySelector("#player-error"),
+    savePlayer: document.querySelector("#save-player"),
     openHelp: document.querySelector("#open-help"),
     helpOverlay: document.querySelector("#help-overlay"),
     closeHelp: document.querySelector("#close-help"),
@@ -367,30 +372,62 @@ function updateClock() {
     }
 }
 
-function showVictory() {
-    if (!state.game || state.game.status !== "won") return;
-    els.victorySummary.textContent = `${state.game.attempts.length} essai(s) · ${formatTime(state.game.elapsed_seconds)} · score ${state.game.score}`;
+function showEndDialog() {
+    if (!state.game || state.game.status === "active") return;
+    const won = state.game.status === "won";
+    els.endLabel.textContent = won ? "Victoire" : "Partie terminée";
+    els.endTitle.textContent = won
+        ? "Combinaison trouvée !"
+        : state.game.status === "completed"
+            ? "Code trouvé hors limite"
+            : "Partie abandonnée";
+    els.victorySummary.textContent = `${state.game.attempts.length} essai(s) · score ${state.game.score}`;
+    els.playerName.value = state.game.player_name || localStorage.getItem("mastermind-player-name") || "";
+    els.playerError.textContent = "";
     els.confetti.innerHTML = "";
-    const colors = ["#ef4444", "#3b82f6", "#22c55e", "#eab308", "#a855f7", "#f97316"];
-    for (let index = 0; index < 70; index += 1) {
-        const piece = document.createElement("span");
-        piece.className = "confetti-piece";
-        piece.style.left = `${Math.random() * 100}%`;
-        piece.style.background = colors[index % colors.length];
-        piece.style.animationDelay = `${Math.random() * 0.65}s`;
-        piece.style.animationDuration = `${1.8 + Math.random() * 1.5}s`;
-        piece.style.setProperty("--spin", `${360 + Math.floor(Math.random() * 720)}deg`);
-        els.confetti.appendChild(piece);
+    if (won) {
+        const colors = ["#ef4444", "#3b82f6", "#22c55e", "#eab308", "#a855f7", "#f97316"];
+        for (let index = 0; index < 70; index += 1) {
+            const piece = document.createElement("span");
+            piece.className = "confetti-piece";
+            piece.style.left = `${Math.random() * 100}%`;
+            piece.style.background = colors[index % colors.length];
+            piece.style.animationDelay = `${Math.random() * 0.65}s`;
+            piece.style.animationDuration = `${1.8 + Math.random() * 1.5}s`;
+            piece.style.setProperty("--spin", `${360 + Math.floor(Math.random() * 720)}deg`);
+            els.confetti.appendChild(piece);
+        }
     }
     els.victoryOverlay.classList.add("visible");
     els.victoryOverlay.setAttribute("aria-hidden", "false");
-    els.closeVictory.focus();
+    els.playerName.focus();
 }
 
 function hideVictory() {
     els.victoryOverlay.classList.remove("visible");
     els.victoryOverlay.setAttribute("aria-hidden", "true");
     els.confetti.innerHTML = "";
+}
+
+async function savePlayerName() {
+    if (!state.game || state.game.status === "active") return;
+    const playerName = els.playerName.value.trim();
+    if (!playerName) {
+        els.playerError.textContent = "Entre un pseudonyme.";
+        els.playerName.focus();
+        return;
+    }
+    try {
+        state.game = await api(`/api/games/${state.game.id}/player`, {
+            method: "PUT",
+            body: JSON.stringify({ player_name: playerName }),
+        });
+        localStorage.setItem("mastermind-player-name", state.game.player_name);
+        await loadHistory();
+        hideVictory();
+    } catch (error) {
+        els.playerError.textContent = error.message;
+    }
 }
 
 function showHelp() {
@@ -416,7 +453,7 @@ async function loadHistory() {
     els.history.innerHTML = "";
     if (!history.length) {
         const row = document.createElement("tr");
-        row.innerHTML = '<td colspan="6" class="empty-state">Aucune partie terminée.</td>';
+        row.innerHTML = '<td colspan="7" class="empty-state">Aucune partie terminée.</td>';
         els.history.appendChild(row);
         return;
     }
@@ -434,6 +471,7 @@ async function loadHistory() {
         const secret = game.secret.map((value) => choiceByValue(value, game.mode)?.label || value).join(" · ");
         row.innerHTML = `
             <td>${label}</td>
+            <td>${game.player_name || "—"}</td>
             <td>${status}</td>
             <td>${game.attempts.length}</td>
             <td>${formatTime(game.elapsed_seconds)}</td>
@@ -465,12 +503,11 @@ async function submitGuess() {
             method: "POST",
             body: JSON.stringify({ guess: state.guess }),
         });
-        const won = state.game.status === "won";
         renderGame();
         if (state.game.status !== "active") {
             await Promise.all([loadStats(), loadHistory()]);
         }
-        if (won) showVictory();
+        if (state.game.status !== "active") showEndDialog();
     } catch (error) {
         els.message.textContent = error.message;
     }
@@ -482,6 +519,7 @@ async function giveUp() {
         state.game = await api(`/api/games/${state.game.id}/give-up`, { method: "POST" });
         renderGame();
         await Promise.all([loadStats(), loadHistory()]);
+        showEndDialog();
     } catch (error) {
         els.message.textContent = error.message;
     }
@@ -532,6 +570,10 @@ els.difficulty.addEventListener("change", () => {
     }
 });
 els.closeVictory.addEventListener("click", hideVictory);
+els.savePlayer.addEventListener("click", savePlayerName);
+els.playerName.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") savePlayerName();
+});
 els.openHelp.addEventListener("click", showHelp);
 els.closeHelp.addEventListener("click", hideHelp);
 els.helpOverlay.addEventListener("click", (event) => {

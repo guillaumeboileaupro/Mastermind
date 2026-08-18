@@ -16,6 +16,7 @@ def active_game() -> Game:
         "ended_at": None,
         "duration_seconds": 0,
         "score": 0,
+        "player_name": None,
     }
 
 

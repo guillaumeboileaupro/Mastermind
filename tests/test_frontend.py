@@ -30,3 +30,14 @@ def test_help_is_opened_in_a_dialog() -> None:
     assert 'id="help-overlay" class="help-overlay" aria-hidden="true"' in page
     assert 'role="dialog" aria-modal="true"' in page
     assert 'els.openHelp.addEventListener("click", showHelp)' in script
+
+
+def test_finished_game_asks_for_player_name() -> None:
+    """La fin de partie propose un pseudonyme pour l'historique des scores."""
+    page = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    script = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+
+    assert 'id="player-name"' in page
+    assert "async function savePlayerName()" in script
+    assert 'method: "PUT"' in script
+    assert '<th>Joueur</th>' in page

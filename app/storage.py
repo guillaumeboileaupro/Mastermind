@@ -44,6 +44,9 @@ def init_db() -> None:
             )
             """
         )
+        columns = {str(row["name"]) for row in db.execute("PRAGMA table_info(games)")}
+        if "player_name" not in columns:
+            db.execute("ALTER TABLE games ADD COLUMN player_name TEXT")
         db.execute(
             "CREATE INDEX IF NOT EXISTS idx_games_status_started ON games(status, started_at DESC)"
         )
@@ -136,6 +139,17 @@ def list_history(limit: int = 50) -> list[Game]:
     return [_decode(row) for row in rows]
 
 
+def set_player_name(game_id: str, player_name: str) -> None:
+    """Associe un pseudonyme à une partie terminée."""
+    with _connect() as db:
+        cursor = db.execute(
+            "UPDATE games SET player_name = ? WHERE id = ? AND status != 'active'",
+            (player_name, game_id),
+        )
+    if cursor.rowcount == 0:
+        raise ValueError("La partie doit être terminée avant de saisir un pseudonyme")
+
+
 def get_stats() -> Stats:
     """Agrège les statistiques de toutes les parties terminées."""
     with _connect() as db:
@@ -181,4 +195,5 @@ def _decode(row: sqlite3.Row) -> Game:
         "ended_at": row["ended_at"],
         "duration_seconds": int(row["duration_seconds"] or 0),
         "score": int(row["score"] or 0),
+        "player_name": str(row["player_name"]) if row["player_name"] else None,
     }
