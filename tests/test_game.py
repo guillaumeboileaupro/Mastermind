@@ -6,6 +6,7 @@ from app.game import (
     calculate_score,
     compact_result,
     evaluate_guess,
+    evaluate_guess_feedback,
     generate_secret,
     live_score,
     validate_guess,
@@ -34,6 +35,32 @@ def test_evaluate_guess_counts_well_and_misplaced() -> None:
 
     assert evaluate_guess(secret, guess) == (1, 2)
     assert compact_result(1, 2) == "12"
+
+
+def test_easy_feedback_identifies_each_position() -> None:
+    """Le mode facile peut expliquer chaque pion de la tentative."""
+    secret = ["red", "red", "blue", "green"]
+    guess = ["red", "blue", "red", "yellow"]
+
+    assert evaluate_guess_feedback(secret, guess) == [
+        "well_placed",
+        "misplaced",
+        "misplaced",
+        "absent",
+    ]
+
+
+def test_easy_feedback_handles_duplicates_without_false_hint() -> None:
+    """Un doublon en trop est indiqué absent plutôt que mal placé."""
+    secret = ["red", "blue", "green", "yellow"]
+    guess = ["red", "red", "red", "red"]
+
+    assert evaluate_guess_feedback(secret, guess) == [
+        "well_placed",
+        "absent",
+        "absent",
+        "absent",
+    ]
 
 
 def test_evaluate_guess_handles_duplicates_without_double_counting() -> None:
