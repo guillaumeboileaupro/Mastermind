@@ -14,16 +14,19 @@ HOST = "127.0.0.1"
 
 
 def resource_path(relative: str) -> Path:
+    """Résout le chemin d'une ressource embarquée depuis la racine du projet."""
     return Path(__file__).resolve().parent / relative
 
 
 def find_free_port() -> int:
+    """Demande au système un port TCP local actuellement disponible."""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.bind((HOST, 0))
         return int(sock.getsockname()[1])
 
 
 def wait_for_server(port: int, timeout: float = 10.0) -> None:
+    """Attend que le serveur local accepte les connexions ou lève une erreur."""
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -35,6 +38,7 @@ def wait_for_server(port: int, timeout: float = 10.0) -> None:
 
 
 def run() -> None:
+    """Démarre l'API locale et ouvre la fenêtre desktop pywebview."""
     port = find_free_port()
     config = uvicorn.Config(
         app,

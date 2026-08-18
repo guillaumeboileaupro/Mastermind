@@ -29,6 +29,7 @@ _rng = SystemRandom()
 
 
 def generate_secret(mode: str) -> list[str]:
+    """Génère un code secret aléatoire pour le mode demandé."""
     if mode not in MODES:
         raise ValueError("Mode de jeu inconnu")
     values = [choice["value"] for choice in MODES[mode]["choices"]]
@@ -36,6 +37,7 @@ def generate_secret(mode: str) -> list[str]:
 
 
 def validate_guess(mode: str, guess: list[str]) -> None:
+    """Vérifie qu'une proposition respecte le mode et la longueur du code."""
     if mode not in MODES:
         raise ValueError("Mode de jeu inconnu")
     if len(guess) != CODE_LENGTH:
@@ -46,6 +48,7 @@ def validate_guess(mode: str, guess: list[str]) -> None:
 
 
 def evaluate_guess(secret: list[str], guess: list[str]) -> tuple[int, int]:
+    """Compte les valeurs bien placées et mal placées d'une proposition."""
     well_placed = sum(expected == actual for expected, actual in zip(secret, guess))
 
     remaining_secret = Counter(
@@ -65,15 +68,18 @@ def evaluate_guess(secret: list[str], guess: list[str]) -> tuple[int, int]:
 
 
 def compact_result(well_placed: int, misplaced: int) -> str:
+    """Encode les deux compteurs du résultat sous une forme compacte."""
     return f"{well_placed}{misplaced}"
 
 
 def calculate_score(attempt_count: int, duration_seconds: int) -> int:
+    """Calcule le score final d'une partie gagnée."""
     # 1000 points pour une victoire immédiate, puis pénalité par essai et seconde.
     penalty = max(0, attempt_count - 1) * 100 + max(0, duration_seconds)
     return max(100, 1000 - penalty)
 
 
 def live_score(attempt_count: int, elapsed_seconds: int) -> int:
+    """Calcule le score provisoire affiché pendant une partie."""
     penalty = max(0, attempt_count) * 100 + max(0, elapsed_seconds)
     return max(0, 1000 - penalty)

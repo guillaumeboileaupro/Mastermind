@@ -9,6 +9,7 @@ from .types import Attempt, Game, Stats
 
 
 def _default_db_path() -> Path:
+    """Retourne l'emplacement persistant par défaut de la base SQLite."""
     data_home = Path(os.getenv("XDG_DATA_HOME", Path.home() / ".local" / "share"))
     return data_home / "mastermind" / "mastermind.db"
 
@@ -17,6 +18,7 @@ DB_PATH = Path(os.getenv("MASTERMIND_DB", _default_db_path()))
 
 
 def _connect() -> sqlite3.Connection:
+    """Ouvre une connexion SQLite configurée pour retourner des lignes nommées."""
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(DB_PATH)
     connection.row_factory = sqlite3.Row
@@ -24,6 +26,7 @@ def _connect() -> sqlite3.Connection:
 
 
 def init_db() -> None:
+    """Crée le schéma et les index de stockage s'ils n'existent pas."""
     with _connect() as db:
         db.execute(
             """
@@ -46,6 +49,7 @@ def init_db() -> None:
 
 
 def create_game(mode: str, secret: list[str], started_at: str) -> Game:
+    """Crée et retourne une nouvelle partie active."""
     game_id = str(uuid4())
     with _connect() as db:
         db.execute(
@@ -62,12 +66,14 @@ def create_game(mode: str, secret: list[str], started_at: str) -> Game:
 
 
 def get_game(game_id: str) -> Game | None:
+    """Charge une partie par son identifiant, si elle existe."""
     with _connect() as db:
         row = db.execute("SELECT * FROM games WHERE id = ?", (game_id,)).fetchone()
     return _decode(row) if row else None
 
 
 def get_current_game() -> Game | None:
+    """Retourne la partie active la plus récente, si elle existe."""
     with _connect() as db:
         row = db.execute(
             "SELECT * FROM games WHERE status = 'active' ORDER BY started_at DESC LIMIT 1"
@@ -76,6 +82,7 @@ def get_current_game() -> Game | None:
 
 
 def save_attempts(game_id: str, attempts: list[Attempt]) -> None:
+    """Remplace la liste persistée des tentatives d'une partie."""
     with _connect() as db:
         db.execute(
             "UPDATE games SET attempts_json = ? WHERE id = ?",
@@ -91,6 +98,7 @@ def finish_game(
     duration_seconds: int,
     score: int,
 ) -> None:
+    """Termine une partie avec son statut, sa durée et son score définitifs."""
     with _connect() as db:
         db.execute(
             """
@@ -103,6 +111,7 @@ def finish_game(
 
 
 def abandon_active_games(ended_at: str, durations: dict[str, int]) -> None:
+    """Abandonne toutes les parties actives avec leurs durées connues."""
     with _connect() as db:
         rows = db.execute("SELECT id FROM games WHERE status = 'active'").fetchall()
         for row in rows:
@@ -117,6 +126,7 @@ def abandon_active_games(ended_at: str, durations: dict[str, int]) -> None:
 
 
 def list_history(limit: int = 50) -> list[Game]:
+    """Liste les parties terminées de la plus récente à la plus ancienne."""
     with _connect() as db:
         rows = db.execute(
             "SELECT * FROM games WHERE status != 'active' ORDER BY started_at DESC LIMIT ?",
@@ -126,6 +136,7 @@ def list_history(limit: int = 50) -> list[Game]:
 
 
 def get_stats() -> Stats:
+    """Agrège les statistiques de toutes les parties terminées."""
     with _connect() as db:
         row = db.execute(
             """
@@ -149,6 +160,7 @@ def get_stats() -> Stats:
 
 
 def _decode(row: sqlite3.Row) -> Game:
+    """Convertit une ligne SQLite en structure de partie typée."""
     return {
         "id": row["id"],
         "mode": row["mode"],

@@ -36,14 +36,17 @@ STATIC_DIR = BASE_DIR / "static"
 
 
 def utc_now() -> datetime:
+    """Retourne l'instant courant avec le fuseau UTC."""
     return datetime.now(timezone.utc)
 
 
 def parse_datetime(value: str) -> datetime:
+    """Convertit une date ISO 8601 en objet datetime."""
     return datetime.fromisoformat(value)
 
 
 def elapsed_seconds(game: Game, now: datetime | None = None) -> int:
+    """Retourne la durée figée ou écoulée d'une partie."""
     if game["status"] != "active":
         return int(game["duration_seconds"])
     current = now or utc_now()
@@ -52,6 +55,7 @@ def elapsed_seconds(game: Game, now: datetime | None = None) -> int:
 
 
 def public_game(game: Game) -> PublicGame:
+    """Masque le secret actif et prépare une partie pour l'API publique."""
     elapsed = elapsed_seconds(game)
     active = game["status"] == "active"
     return {
@@ -70,6 +74,7 @@ def public_game(game: Game) -> PublicGame:
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    """Initialise le stockage pendant le cycle de vie de l'application."""
     init_db()
     yield
 
@@ -88,16 +93,19 @@ class GuessRequest(BaseModel):
 
 @app.get("/")
 def home() -> FileResponse:
+    """Sert la page principale de l'application."""
     return FileResponse(STATIC_DIR / "index.html")
 
 
 @app.get("/api/health")
 def health() -> dict[str, str]:
+    """Indique que le service HTTP est disponible."""
     return {"status": "ok"}
 
 
 @app.get("/api/modes")
 def modes() -> ModesResponse:
+    """Expose les modes, choix et règles disponibles."""
     return {
         "code_length": CODE_LENGTH,
         "repetition_allowed": True,
@@ -107,12 +115,14 @@ def modes() -> ModesResponse:
 
 @app.get("/api/games/current")
 def current_game() -> PublicGame | None:
+    """Retourne la partie active destinée au client, si elle existe."""
     game = get_current_game()
     return public_game(game) if game else None
 
 
 @app.post("/api/games", status_code=201)
 def new_game(payload: NewGameRequest) -> PublicGame:
+    """Démarre une partie et abandonne l'éventuelle partie active."""
     if payload.mode not in MODES:
         raise HTTPException(status_code=400, detail="Mode de jeu inconnu")
 
@@ -130,6 +140,7 @@ def new_game(payload: NewGameRequest) -> PublicGame:
 
 @app.post("/api/games/{game_id}/guesses")
 def submit_guess(game_id: str, payload: GuessRequest) -> PublicGame:
+    """Valide une proposition, l'enregistre et termine une victoire."""
     game = get_game(game_id)
     if not game:
         raise HTTPException(status_code=404, detail="Partie introuvable")
@@ -175,6 +186,7 @@ def submit_guess(game_id: str, payload: GuessRequest) -> PublicGame:
 
 @app.post("/api/games/{game_id}/give-up")
 def give_up(game_id: str) -> PublicGame:
+    """Abandonne une partie active et retourne son état public final."""
     game = get_game(game_id)
     if not game:
         raise HTTPException(status_code=404, detail="Partie introuvable")
@@ -197,9 +209,11 @@ def give_up(game_id: str) -> PublicGame:
 
 @app.get("/api/history")
 def history(limit: int = Query(default=50, ge=1, le=200)) -> list[PublicGame]:
+    """Retourne l'historique public des parties terminées."""
     return [public_game(game) for game in list_history(limit)]
 
 
 @app.get("/api/stats")
 def stats() -> Stats:
+    """Retourne les statistiques agrégées des parties terminées."""
     return get_stats()
