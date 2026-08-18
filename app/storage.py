@@ -2,8 +2,10 @@ import json
 import os
 import sqlite3
 from pathlib import Path
-from typing import Any
+from typing import cast
 from uuid import uuid4
+
+from .types import Attempt, Game, Stats
 
 
 def _default_db_path() -> Path:
@@ -43,7 +45,7 @@ def init_db() -> None:
         )
 
 
-def create_game(mode: str, secret: list[str], started_at: str) -> dict[str, Any]:
+def create_game(mode: str, secret: list[str], started_at: str) -> Game:
     game_id = str(uuid4())
     with _connect() as db:
         db.execute(
@@ -53,16 +55,19 @@ def create_game(mode: str, secret: list[str], started_at: str) -> dict[str, Any]
             """,
             (game_id, mode, json.dumps(secret), started_at),
         )
-    return get_game(game_id)
+    game = get_game(game_id)
+    if game is None:
+        raise RuntimeError("La partie créée est introuvable")
+    return game
 
 
-def get_game(game_id: str) -> dict[str, Any] | None:
+def get_game(game_id: str) -> Game | None:
     with _connect() as db:
         row = db.execute("SELECT * FROM games WHERE id = ?", (game_id,)).fetchone()
     return _decode(row) if row else None
 
 
-def get_current_game() -> dict[str, Any] | None:
+def get_current_game() -> Game | None:
     with _connect() as db:
         row = db.execute(
             "SELECT * FROM games WHERE status = 'active' ORDER BY started_at DESC LIMIT 1"
@@ -70,7 +75,7 @@ def get_current_game() -> dict[str, Any] | None:
     return _decode(row) if row else None
 
 
-def save_attempts(game_id: str, attempts: list[dict[str, Any]]) -> None:
+def save_attempts(game_id: str, attempts: list[Attempt]) -> None:
     with _connect() as db:
         db.execute(
             "UPDATE games SET attempts_json = ? WHERE id = ?",
@@ -111,7 +116,7 @@ def abandon_active_games(ended_at: str, durations: dict[str, int]) -> None:
             )
 
 
-def list_history(limit: int = 50) -> list[dict[str, Any]]:
+def list_history(limit: int = 50) -> list[Game]:
     with _connect() as db:
         rows = db.execute(
             "SELECT * FROM games WHERE status != 'active' ORDER BY started_at DESC LIMIT ?",
@@ -120,7 +125,7 @@ def list_history(limit: int = 50) -> list[dict[str, Any]]:
     return [_decode(row) for row in rows]
 
 
-def get_stats() -> dict[str, Any]:
+def get_stats() -> Stats:
     with _connect() as db:
         row = db.execute(
             """
@@ -143,12 +148,12 @@ def get_stats() -> dict[str, Any]:
     }
 
 
-def _decode(row: sqlite3.Row) -> dict[str, Any]:
+def _decode(row: sqlite3.Row) -> Game:
     return {
         "id": row["id"],
         "mode": row["mode"],
-        "secret": json.loads(row["secret_json"]),
-        "attempts": json.loads(row["attempts_json"]),
+        "secret": cast(list[str], json.loads(row["secret_json"])),
+        "attempts": cast(list[Attempt], json.loads(row["attempts_json"])),
         "status": row["status"],
         "started_at": row["started_at"],
         "ended_at": row["ended_at"],

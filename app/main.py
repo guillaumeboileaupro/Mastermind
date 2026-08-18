@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import AsyncIterator
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse
@@ -29,6 +29,7 @@ from .storage import (
     list_history,
     save_attempts,
 )
+from .types import Attempt, Game, ModesResponse, PublicGame, Stats
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_DIR = BASE_DIR / "static"
@@ -42,7 +43,7 @@ def parse_datetime(value: str) -> datetime:
     return datetime.fromisoformat(value)
 
 
-def elapsed_seconds(game: dict[str, Any], now: datetime | None = None) -> int:
+def elapsed_seconds(game: Game, now: datetime | None = None) -> int:
     if game["status"] != "active":
         return int(game["duration_seconds"])
     current = now or utc_now()
@@ -50,7 +51,7 @@ def elapsed_seconds(game: dict[str, Any], now: datetime | None = None) -> int:
     return max(0, int((current - started).total_seconds()))
 
 
-def public_game(game: dict[str, Any]) -> dict[str, Any]:
+def public_game(game: Game) -> PublicGame:
     elapsed = elapsed_seconds(game)
     active = game["status"] == "active"
     return {
@@ -68,7 +69,7 @@ def public_game(game: dict[str, Any]) -> dict[str, Any]:
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI):
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     init_db()
     yield
 
@@ -96,7 +97,7 @@ def health() -> dict[str, str]:
 
 
 @app.get("/api/modes")
-def modes() -> dict[str, Any]:
+def modes() -> ModesResponse:
     return {
         "code_length": CODE_LENGTH,
         "repetition_allowed": True,
@@ -105,13 +106,13 @@ def modes() -> dict[str, Any]:
 
 
 @app.get("/api/games/current")
-def current_game() -> dict[str, Any] | None:
+def current_game() -> PublicGame | None:
     game = get_current_game()
     return public_game(game) if game else None
 
 
 @app.post("/api/games", status_code=201)
-def new_game(payload: NewGameRequest) -> dict[str, Any]:
+def new_game(payload: NewGameRequest) -> PublicGame:
     if payload.mode not in MODES:
         raise HTTPException(status_code=400, detail="Mode de jeu inconnu")
 
@@ -128,7 +129,7 @@ def new_game(payload: NewGameRequest) -> dict[str, Any]:
 
 
 @app.post("/api/games/{game_id}/guesses")
-def submit_guess(game_id: str, payload: GuessRequest) -> dict[str, Any]:
+def submit_guess(game_id: str, payload: GuessRequest) -> PublicGame:
     game = get_game(game_id)
     if not game:
         raise HTTPException(status_code=404, detail="Partie introuvable")
@@ -141,7 +142,7 @@ def submit_guess(game_id: str, payload: GuessRequest) -> dict[str, Any]:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     well_placed, misplaced = evaluate_guess(game["secret"], payload.guess)
-    attempts = list(game["attempts"])
+    attempts: list[Attempt] = list(game["attempts"])
     now = utc_now()
     attempts.append(
         {
@@ -173,7 +174,7 @@ def submit_guess(game_id: str, payload: GuessRequest) -> dict[str, Any]:
 
 
 @app.post("/api/games/{game_id}/give-up")
-def give_up(game_id: str) -> dict[str, Any]:
+def give_up(game_id: str) -> PublicGame:
     game = get_game(game_id)
     if not game:
         raise HTTPException(status_code=404, detail="Partie introuvable")
@@ -195,10 +196,10 @@ def give_up(game_id: str) -> dict[str, Any]:
 
 
 @app.get("/api/history")
-def history(limit: int = Query(default=50, ge=1, le=200)) -> list[dict[str, Any]]:
+def history(limit: int = Query(default=50, ge=1, le=200)) -> list[PublicGame]:
     return [public_game(game) for game in list_history(limit)]
 
 
 @app.get("/api/stats")
-def stats() -> dict[str, Any]:
+def stats() -> Stats:
     return get_stats()

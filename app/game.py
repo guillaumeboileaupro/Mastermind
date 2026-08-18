@@ -1,9 +1,11 @@
 from collections import Counter
 from random import SystemRandom
 
+from .types import ModeDefinition
+
 CODE_LENGTH = 4
 
-MODES = {
+MODES: dict[str, ModeDefinition] = {
     "colors": {
         "label": "Couleurs",
         "choices": [
