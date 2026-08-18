@@ -27,13 +27,14 @@ def _connect() -> sqlite3.Connection:
 
 
 def init_db() -> None:
-    """Crée le schéma et les index de stockage s'ils n'existent pas."""
+    """Crée le schéma et applique les migrations légères nécessaires."""
     with _connect() as db:
         db.execute(
             """
             CREATE TABLE IF NOT EXISTS games (
                 id TEXT PRIMARY KEY,
                 mode TEXT NOT NULL,
+                code_length INTEGER NOT NULL DEFAULT 4,
                 secret_json TEXT NOT NULL,
                 attempts_json TEXT NOT NULL DEFAULT '[]',
                 status TEXT NOT NULL,
@@ -47,21 +48,29 @@ def init_db() -> None:
         columns = {str(row["name"]) for row in db.execute("PRAGMA table_info(games)")}
         if "player_name" not in columns:
             db.execute("ALTER TABLE games ADD COLUMN player_name TEXT")
+        if "code_length" not in columns:
+            db.execute("ALTER TABLE games ADD COLUMN code_length INTEGER NOT NULL DEFAULT 4")
         db.execute(
             "CREATE INDEX IF NOT EXISTS idx_games_status_started ON games(status, started_at DESC)"
         )
 
 
-def create_game(mode: str, secret: list[str], started_at: str) -> Game:
+def create_game(
+    mode: str,
+    secret: list[str],
+    started_at: str,
+    code_length: int | None = None,
+) -> Game:
     """Crée et retourne une nouvelle partie active."""
     game_id = str(uuid4())
+    length = code_length if code_length is not None else len(secret)
     with _connect() as db:
         db.execute(
             """
-            INSERT INTO games(id, mode, secret_json, attempts_json, status, started_at)
-            VALUES (?, ?, ?, '[]', 'active', ?)
+            INSERT INTO games(id, mode, code_length, secret_json, attempts_json, status, started_at)
+            VALUES (?, ?, ?, ?, '[]', 'active', ?)
             """,
-            (game_id, mode, json.dumps(secret), started_at),
+            (game_id, mode, length, json.dumps(secret), started_at),
         )
     game = get_game(game_id)
     if game is None:
@@ -185,9 +194,12 @@ def _decode(row: sqlite3.Row) -> Game:
             attempt["guess"] = [
                 LEGACY_COLOR_VALUES.get(value, value) for value in attempt["guess"]
             ]
+    row_keys = set(row.keys())
+    code_length = int(row["code_length"] or 4) if "code_length" in row_keys else len(secret)
     return {
         "id": row["id"],
         "mode": mode,
+        "code_length": code_length,
         "secret": secret,
         "attempts": attempts,
         "status": row["status"],
