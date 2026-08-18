@@ -1,7 +1,7 @@
 from collections import Counter
 from random import SystemRandom
 
-from .types import ModeDefinition
+from .types import FeedbackStatus, ModeDefinition
 
 CODE_LENGTH = 4
 
@@ -47,24 +47,31 @@ def validate_guess(mode: str, guess: list[str]) -> None:
         raise ValueError("La combinaison contient une valeur invalide")
 
 
-def evaluate_guess(secret: list[str], guess: list[str]) -> tuple[int, int]:
-    """Compte les valeurs bien placées et mal placées d'une proposition."""
-    well_placed = sum(expected == actual for expected, actual in zip(secret, guess))
+def evaluate_guess_feedback(secret: list[str], guess: list[str]) -> list[FeedbackStatus]:
+    """Retourne l'état de chaque position sans compter deux fois les doublons."""
+    feedback: list[FeedbackStatus] = ["absent"] * len(guess)
+    remaining_secret: Counter[str] = Counter()
 
-    remaining_secret = Counter(
-        expected
-        for expected, actual in zip(secret, guess)
-        if expected != actual
-    )
-    misplaced = 0
-    for expected, actual in zip(secret, guess):
+    for index, (expected, actual) in enumerate(zip(secret, guess)):
         if expected == actual:
+            feedback[index] = "well_placed"
+        else:
+            remaining_secret[expected] += 1
+
+    for index, actual in enumerate(guess):
+        if feedback[index] == "well_placed":
             continue
         if remaining_secret[actual] > 0:
-            misplaced += 1
+            feedback[index] = "misplaced"
             remaining_secret[actual] -= 1
 
-    return well_placed, misplaced
+    return feedback
+
+
+def evaluate_guess(secret: list[str], guess: list[str]) -> tuple[int, int]:
+    """Compte les valeurs bien placées et mal placées d'une proposition."""
+    feedback = evaluate_guess_feedback(secret, guess)
+    return feedback.count("well_placed"), feedback.count("misplaced")
 
 
 def compact_result(well_placed: int, misplaced: int) -> str:
