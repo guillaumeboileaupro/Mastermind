@@ -8,6 +8,7 @@ const state = {
 
 const els = {
     mode: document.querySelector("#mode"),
+    difficulty: document.querySelector("#difficulty"),
     newGame: document.querySelector("#new-game"),
     giveUp: document.querySelector("#give-up"),
     timer: document.querySelector("#timer"),
@@ -24,6 +25,7 @@ const els = {
     attempts: document.querySelector("#attempts"),
     history: document.querySelector("#history"),
     scoreHelp: document.querySelector("#score-help"),
+    easyLegend: document.querySelector("#easy-legend"),
     victoryOverlay: document.querySelector("#victory-overlay"),
     victorySummary: document.querySelector("#victory-summary"),
     closeVictory: document.querySelector("#close-victory"),
@@ -69,6 +71,17 @@ function blankGuess() {
 
 function isGuessComplete() {
     return state.guess.length === state.config.code_length && state.guess.every(Boolean);
+}
+
+function isEasyMode() {
+    return els.difficulty?.value === "easy";
+}
+
+function feedbackLabel(status) {
+    if (status === "well_placed") return { icon: "✓", text: "Bien placé" };
+    if (status === "misplaced") return { icon: "↔", text: "Mal placé" };
+    if (status === "absent") return { icon: "✕", text: "Absent" };
+    return { icon: "?", text: "Indice indisponible" };
 }
 
 function renderToken(value, mode, small = false) {
@@ -124,7 +137,7 @@ function renderPalette() {
         button.title = `${choice.label} — cliquer ou glisser`;
         button.setAttribute("aria-label", choice.label);
         button.draggable = true;
-        if (state.game?.mode === "colors") {
+        if ((state.game?.mode || els.mode.value) === "colors") {
             button.style.background = choice.color;
         } else {
             button.textContent = choice.label;
@@ -150,7 +163,7 @@ function renderCurrentGuess() {
         slot.title = value ? "Cliquer pour enlever, ou glisser pour déplacer" : "Dépose un pion ici";
 
         if (value) {
-            slot.appendChild(renderToken(value, state.game?.mode));
+            slot.appendChild(renderToken(value, state.game?.mode || els.mode.value));
             slot.draggable = true;
             slot.setAttribute("role", "button");
             slot.setAttribute("tabindex", "0");
@@ -215,12 +228,34 @@ function renderCurrentGuess() {
     els.submit.disabled = !state.game || state.game.status !== "active" || !isGuessComplete();
 }
 
+function renderAttemptToken(attempt, value, index) {
+    if (!isEasyMode()) return renderToken(value, state.game.mode, true);
+
+    const status = attempt.feedback?.[index];
+    const label = feedbackLabel(status);
+    const wrapper = document.createElement("span");
+    wrapper.className = `easy-feedback feedback-${status || "unknown"}`;
+    wrapper.title = `${choiceByValue(value, state.game.mode)?.label || value} : ${label.text}`;
+
+    wrapper.appendChild(renderToken(value, state.game.mode, true));
+
+    const hint = document.createElement("small");
+    hint.className = "easy-feedback-label";
+    hint.textContent = `${label.icon} ${label.text}`;
+    wrapper.appendChild(hint);
+    return wrapper;
+}
+
 function renderAttempts() {
     els.attempts.innerHTML = "";
+    if (els.easyLegend) els.easyLegend.hidden = !isEasyMode();
+
     const attempts = state.game?.attempts || [];
     if (!attempts.length) {
         els.attempts.innerHTML = '<p class="empty-state">Aucune tentative pour le moment.</p>';
-        els.scoreHelp.textContent = "Aucune tentative pour le moment.";
+        els.scoreHelp.textContent = isEasyMode()
+            ? "En mode facile, chaque pion recevra un indice après validation."
+            : "Aucune tentative pour le moment.";
         return;
     }
 
@@ -229,7 +264,7 @@ function renderAttempts() {
 
     [...attempts].reverse().forEach((attempt) => {
         const row = document.createElement("div");
-        row.className = "attempt-row";
+        row.className = `attempt-row${isEasyMode() ? " easy-attempt" : ""}`;
 
         const number = document.createElement("strong");
         number.textContent = `#${attempt.number}`;
@@ -237,7 +272,7 @@ function renderAttempts() {
 
         const tokens = document.createElement("div");
         tokens.className = "attempt-tokens";
-        attempt.guess.forEach((value) => tokens.appendChild(renderToken(value, state.game.mode, true)));
+        attempt.guess.forEach((value, index) => tokens.appendChild(renderAttemptToken(attempt, value, index)));
         row.appendChild(tokens);
 
         const result = document.createElement("span");
@@ -276,6 +311,8 @@ function renderGame() {
         els.message.textContent = `Partie abandonnée. Code : ${state.game.secret.join(" · ")}`;
     } else if (state.game.status === "abandoned") {
         els.message.textContent = "Partie remplacée par une nouvelle partie.";
+    } else if (isEasyMode()) {
+        els.message.textContent = "Mode facile enfant : après chaque essai, regarde l'indice sous chaque pion.";
     } else {
         els.message.textContent = "Trouve la combinaison secrète.";
     }
@@ -404,6 +441,10 @@ async function init() {
         state.config = await api("/api/modes");
         state.guess = blankGuess();
         renderModeSelector();
+        const savedDifficulty = localStorage.getItem("mastermind-difficulty");
+        if (savedDifficulty === "easy" || savedDifficulty === "normal") {
+            els.difficulty.value = savedDifficulty;
+        }
         state.game = await api("/api/games/current");
         if (state.game) els.mode.value = state.game.mode;
         renderGame();
@@ -430,6 +471,15 @@ els.clear.addEventListener("click", () => {
     renderCurrentGuess();
 });
 els.mode.addEventListener("change", renderPalette);
+els.difficulty.addEventListener("change", () => {
+    localStorage.setItem("mastermind-difficulty", els.difficulty.value);
+    renderAttempts();
+    if (state.game?.status === "active") {
+        els.message.textContent = isEasyMode()
+            ? "Mode facile enfant : après chaque essai, regarde l'indice sous chaque pion."
+            : "Trouve la combinaison secrète.";
+    }
+});
 els.closeVictory.addEventListener("click", hideVictory);
 els.victoryOverlay.addEventListener("click", (event) => {
     if (event.target === els.victoryOverlay) hideVictory();
