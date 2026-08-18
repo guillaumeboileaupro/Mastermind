@@ -3,9 +3,8 @@
 [![Tests](https://github.com/guillaumeboileaupro/Mastermind/actions/workflows/tests.yml/badge.svg)](https://github.com/guillaumeboileaupro/Mastermind/actions/workflows/tests.yml)
 [![Paquet Ubuntu](https://github.com/guillaumeboileaupro/Mastermind/actions/workflows/build-ubuntu.yml/badge.svg)](https://github.com/guillaumeboileaupro/Mastermind/actions/workflows/build-ubuntu.yml)
 
-Jeu Mastermind avec **interface desktop PyQt6 entièrement en Python**, API
-FastAPI optionnelle et persistance SQLite. Le projet ne contient aucun code
-JavaScript.
+Jeu Mastermind avec **frontend HTML/CSS/JavaScript**, application desktop
+Ubuntu via pywebview, backend FastAPI et persistance SQLite.
 
 ## Modes de jeu
 
@@ -34,7 +33,7 @@ Exemple : `21` signifie 2 valeurs bien placées et 1 valeur correcte mal placée
 - sélection du mode de jeu ;
 - génération d'un code secret ;
 - affichage graphique des 6 couleurs ;
-- interface native sans navigateur ni serveur web local ;
+- interface web réactive intégrée dans la fenêtre desktop ;
 - difficulté normale ou facile enfant avec un indice par position ;
 - validation des tentatives avec gestion correcte des doublons ;
 - reprise d'une partie active après redémarrage ;
@@ -90,6 +89,18 @@ version utilisée avant de créer l'environnement :
 python3.10 --version
 ```
 
+### Version web
+
+```bash
+python3.10 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
+
+Puis ouvrir `http://127.0.0.1:8000`.
+
 ### Version desktop
 
 ```bash
@@ -100,20 +111,9 @@ python -m pip install -r requirements-desktop.txt
 python desktop.py
 ```
 
-L'interface graphique appelle directement la logique Python et SQLite. Elle ne
-lance ni navigateur, ni pywebview, ni moteur JavaScript.
-
-### API Python optionnelle
-
-L'API JSON peut être lancée séparément pour le développement ou une intégration
-externe :
-
-```bash
-python -m pip install -r requirements.txt
-python -m uvicorn app.main:app --reload
-```
-
-Elle n'est pas nécessaire au fonctionnement de l'application desktop.
+La fenêtre desktop démarre le serveur FastAPI local et affiche le frontend avec
+pywebview. La version web et la version installée partagent donc exactement la
+même interface.
 
 ## Construire le paquet `.deb`
 
@@ -146,15 +146,18 @@ Une victoire démarre sur une base de 1000 points.
 Mastermind/
 ├── app/
 │   ├── game.py             # règles Mastermind et calcul du score
-│   ├── main.py             # logique applicative + API FastAPI optionnelle
+│   ├── main.py             # API FastAPI + vue locale
 │   ├── storage.py          # persistance SQLite utilisateur
 │   └── types.py            # structures de données strictement typées
 ├── static/
-│   └── mastermind.svg      # logo / icône fourni
+│   ├── mastermind.svg      # logo / icône fourni
+│   ├── app.js
+│   ├── index.html
+│   └── style.css
 ├── packaging/
 │   ├── build-deb.sh        # construction du paquet Ubuntu
 │   └── mastermind.desktop  # entrée du menu Applications
-├── desktop.py              # interface graphique PyQt6 native en Python
+├── desktop.py              # fenêtre desktop pywebview + serveur local
 ├── mastermind.spec         # configuration PyInstaller
 ├── pyproject.toml          # configuration mypy stricte
 ├── requirements-dev.txt    # dépendances des tests et du typage
@@ -185,11 +188,5 @@ python -m pytest -q
 ```
 
 Toutes les fonctions Python possèdent une docstring et des annotations de type.
-La CI exécute le contrôle statique strict avec `mypy` avant les **42 tests
-automatisés**, dont les tests de l'interface PyQt6 en mode hors écran.
-
-## Langages
-
-Le code applicatif est entièrement en Python. Le seul autre langage détecté par
-GitHub est Shell, utilisé exclusivement par `packaging/build-deb.sh` pour créer
-le paquet Debian.
+La CI exécute le contrôle statique strict avec `mypy` avant les **40 tests
+automatisés**.

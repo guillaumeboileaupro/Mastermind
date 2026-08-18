@@ -1,8 +1,11 @@
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import AsyncIterator
 
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from .game import (
@@ -27,6 +30,10 @@ from .storage import (
     save_attempts,
 )
 from .types import Attempt, Game, ModesResponse, PublicGame, Stats
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+STATIC_DIR = BASE_DIR / "static"
+
 
 def utc_now() -> datetime:
     """Retourne l'instant courant avec le fuseau UTC."""
@@ -73,6 +80,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(title="Mastermind API", version="1.0.0", lifespan=lifespan)
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 class NewGameRequest(BaseModel):
@@ -84,9 +92,9 @@ class GuessRequest(BaseModel):
 
 
 @app.get("/")
-def home() -> dict[str, str]:
-    """Présente le service Python sans dépendre d'une interface web."""
-    return {"application": "Mastermind", "interface": "PyQt6 native"}
+def home() -> FileResponse:
+    """Sert la page principale de l'application."""
+    return FileResponse(STATIC_DIR / "index.html")
 
 
 @app.get("/api/health")
