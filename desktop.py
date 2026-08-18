@@ -1,15 +1,18 @@
 import os
 import socket
+import sys
 import threading
 import time
 from pathlib import Path
 
 import uvicorn
 import webview
+from PyQt6.QtWidgets import QApplication
 
 from app.main import app
 
 APP_NAME = "Mastermind"
+DESKTOP_APP_ID = "mastermind"
 HOST = "127.0.0.1"
 
 
@@ -37,8 +40,21 @@ def wait_for_server(port: int, timeout: float = 10.0) -> None:
     raise RuntimeError("Le serveur local Mastermind n'a pas démarré")
 
 
+def configure_qt_identity() -> QApplication:
+    """Force l'identité affichée par Ubuntu/Qt au lieu du nom desktop.py."""
+    qt_app = QApplication.instance() or QApplication(sys.argv)
+    qt_app.setApplicationName(APP_NAME)
+    qt_app.setApplicationDisplayName(APP_NAME)
+    qt_app.setDesktopFileName(DESKTOP_APP_ID)
+    qt_app.setOrganizationName("Guillaume Boileau")
+    return qt_app
+
+
 def run() -> None:
     """Démarre l'API locale et ouvre la fenêtre desktop pywebview."""
+    # pywebview/Qt réutilise cette QApplication existante et conserve son identité.
+    configure_qt_identity()
+
     port = find_free_port()
     config = uvicorn.Config(
         app,
