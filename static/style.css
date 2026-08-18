@@ -14,10 +14,10 @@ button:disabled { cursor: not-allowed; opacity: .45; }
 .page {
     width: min(1100px, calc(100% - 32px));
     margin: 0 auto;
-    padding: 40px 0 64px;
+    padding: 32px 0 64px;
 }
 
-.hero, .section-heading, .controls, .guess-actions, .attempt-row {
+.hero, .brand, .section-heading, .controls, .guess-actions, .attempt-row {
     display: flex;
     align-items: center;
 }
@@ -28,6 +28,15 @@ button:disabled { cursor: not-allowed; opacity: .45; }
     margin-bottom: 24px;
 }
 
+.brand { gap: 18px; min-width: 0; }
+.app-logo {
+    width: 92px;
+    height: 92px;
+    flex: 0 0 92px;
+    border-radius: 24px;
+    filter: drop-shadow(0 10px 18px rgba(11, 46, 109, .18));
+}
+
 h1, h2, p { margin-top: 0; }
 h1 { margin-bottom: 6px; font-size: clamp(2.2rem, 6vw, 4rem); letter-spacing: -.055em; }
 h2 { margin-bottom: 0; letter-spacing: -.025em; }
@@ -35,7 +44,7 @@ h2 { margin-bottom: 0; letter-spacing: -.025em; }
 
 .eyebrow {
     margin-bottom: 7px;
-    color: #6d5dfc;
+    color: #0B2E6D;
     font-size: .76rem;
     font-weight: 800;
     letter-spacing: .12em;
@@ -54,8 +63,8 @@ select, button {
 }
 
 button.primary {
-    border-color: #6657ef;
-    background: #6657ef;
+    border-color: #0B2E6D;
+    background: #0B2E6D;
     color: white;
     font-weight: 800;
 }
@@ -131,8 +140,8 @@ button.danger { color: #b42318; }
     min-width: 52px;
     padding: 7px 11px;
     border-radius: 999px;
-    background: #ebe9fe;
-    color: #5d4fd7;
+    background: #e7eefb;
+    color: #0B2E6D;
     text-align: center;
     font-weight: 900;
     font-variant-numeric: tabular-nums;
@@ -145,8 +154,10 @@ th { color: #667085; font-size: .8rem; text-transform: uppercase; letter-spacing
 .empty-state { color: #98a2b3; text-align: center; }
 
 @media (max-width: 760px) {
-    .page { width: min(100% - 20px, 1100px); padding-top: 24px; }
+    .page { width: min(100% - 20px, 1100px); padding-top: 20px; }
     .hero { align-items: flex-start; flex-direction: column; }
+    .brand { align-items: flex-start; }
+    .app-logo { width: 68px; height: 68px; flex-basis: 68px; border-radius: 18px; }
     .controls { justify-content: flex-start; }
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
     .game-card, .panel { padding: 18px; }

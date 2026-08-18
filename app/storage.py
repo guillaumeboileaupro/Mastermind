@@ -5,9 +5,13 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-DATA_DIR = BASE_DIR / "data"
-DB_PATH = Path(os.getenv("MASTERMIND_DB", DATA_DIR / "mastermind.db"))
+
+def _default_db_path() -> Path:
+    data_home = Path(os.getenv("XDG_DATA_HOME", Path.home() / ".local" / "share"))
+    return data_home / "mastermind" / "mastermind.db"
+
+
+DB_PATH = Path(os.getenv("MASTERMIND_DB", _default_db_path()))
 
 
 def _connect() -> sqlite3.Connection:

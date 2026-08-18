@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Mastermind
+Comment=Jeu de logique Mastermind
+Exec=/usr/bin/mastermind
+Icon=mastermind
+Terminal=false
+Categories=Game;LogicGame;
+StartupNotify=true

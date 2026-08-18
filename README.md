@@ -1,10 +1,10 @@
 # Mastermind
 
-Application web Mastermind avec backend FastAPI et persistance SQLite.
+Jeu Mastermind avec **application desktop Ubuntu**, backend FastAPI et persistance SQLite.
 
 ## Modes de jeu
 
-Deux modes utilisent exactement la même logique Mastermind :
+Deux modes utilisent la même logique Mastermind :
 
 - **Couleurs** : rouge, bleu, vert, jaune, violet, orange.
 - **Chiffres** : 1, 2, 3, 4, 5, 6.
@@ -21,19 +21,81 @@ Exemple : `21` signifie 2 valeurs bien placées et 1 valeur correcte mal placée
 
 ## Fonctions
 
+- application graphique installable sur Ubuntu ;
+- logo Mastermind comme icône de l'application ;
 - sélection du mode de jeu ;
 - génération d'un code secret ;
 - affichage graphique des 6 couleurs ;
 - validation des tentatives avec gestion correcte des doublons ;
-- reprise d'une partie active après redémarrage du serveur ;
+- reprise d'une partie active après redémarrage ;
 - chronomètre de la partie en cours ;
-- score courant ;
-- score final ;
+- score courant et score final ;
 - score total cumulé ;
 - historique persistant des parties ;
 - nombre de victoires ;
 - abandon d'une partie ;
 - changement de mode en démarrant une nouvelle partie.
+
+## Installer sur Ubuntu
+
+Le workflow **Build Ubuntu package** construit un paquet `mastermind_0.1.0_amd64.deb`.
+
+Après téléchargement du `.deb` :
+
+```bash
+sudo apt install ./mastermind_0.1.0_amd64.deb
+```
+
+Mastermind apparaît ensuite dans le menu des applications Ubuntu, catégorie **Jeux**.
+
+Pour le désinstaller :
+
+```bash
+sudo apt remove mastermind
+```
+
+Les parties et statistiques sont conservées dans :
+
+```text
+~/.local/share/mastermind/mastermind.db
+```
+
+Désinstaller le paquet ne supprime donc pas automatiquement l'historique personnel.
+
+## Lancer la version de développement
+
+### Version web
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
+
+Puis ouvrir `http://127.0.0.1:8000`.
+
+### Version desktop
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-desktop.txt
+python desktop.py
+```
+
+## Construire le paquet `.deb`
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-desktop.txt
+bash packaging/build-deb.sh
+```
+
+Le paquet est écrit dans `dist/`.
+
+La CI construit sous Ubuntu 20.04 afin de garder une base glibc compatible avec Ubuntu 20.04 et les versions plus récentes sur architecture x86-64.
 
 ## Score
 
@@ -49,35 +111,22 @@ Une victoire démarre sur une base de 1000 points.
 ```text
 Mastermind/
 ├── app/
-│   ├── __init__.py
-│   ├── game.py        # règles Mastermind et calcul du score
-│   ├── main.py        # API FastAPI + serveur de la vue web
-│   └── storage.py     # persistance SQLite
+│   ├── game.py             # règles Mastermind et calcul du score
+│   ├── main.py             # API FastAPI + vue locale
+│   └── storage.py          # persistance SQLite utilisateur
 ├── static/
-│   ├── app.js         # interaction avec l'API
-│   ├── index.html     # interface du jeu
+│   ├── mastermind.svg      # logo / icône fourni
+│   ├── app.js
+│   ├── index.html
 │   └── style.css
-├── tests/
-│   └── test_game.py
-├── .gitignore
-├── requirements.txt
-└── README.md
+├── packaging/
+│   ├── build-deb.sh        # construction du paquet Ubuntu
+│   └── mastermind.desktop  # entrée du menu Applications
+├── desktop.py              # fenêtre desktop pywebview + serveur local
+├── mastermind.spec         # configuration PyInstaller
+├── requirements-desktop.txt
+└── tests/
 ```
-
-La base SQLite est créée automatiquement dans `data/mastermind.db` au premier démarrage. Elle n'est pas versionnée.
-
-## Lancer le projet
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-```
-
-Puis ouvrir `http://127.0.0.1:8000`.
-
-La documentation interactive FastAPI est disponible sur `http://127.0.0.1:8000/docs`.
 
 ## API principale
 

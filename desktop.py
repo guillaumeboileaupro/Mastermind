@@ -1,0 +1,80 @@
+import os
+import socket
+import threading
+import time
+from pathlib import Path
+
+import uvicorn
+import webview
+
+from app.main import app
+
+APP_NAME = "Mastermind"
+HOST = "127.0.0.1"
+
+
+def resource_path(relative: str) -> Path:
+    return Path(__file__).resolve().parent / relative
+
+
+def find_free_port() -> int:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.bind((HOST, 0))
+        return int(sock.getsockname()[1])
+
+
+def wait_for_server(port: int, timeout: float = 10.0) -> None:
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.settimeout(0.2)
+            if sock.connect_ex((HOST, port)) == 0:
+                return
+        time.sleep(0.05)
+    raise RuntimeError("Le serveur local Mastermind n'a pas démarré")
+
+
+def run() -> None:
+    port = find_free_port()
+    config = uvicorn.Config(
+        app,
+        host=HOST,
+        port=port,
+        log_level="warning",
+        access_log=False,
+        loop="asyncio",
+        http="h11",
+        ws="none",
+    )
+    server = uvicorn.Server(config)
+    thread = threading.Thread(target=server.run, name="mastermind-api", daemon=True)
+    thread.start()
+    wait_for_server(port)
+
+    data_home = Path(os.getenv("XDG_DATA_HOME", Path.home() / ".local" / "share"))
+    webview_storage = data_home / "mastermind" / "webview"
+    webview_storage.mkdir(parents=True, exist_ok=True)
+
+    webview.create_window(
+        APP_NAME,
+        f"http://{HOST}:{port}",
+        width=1180,
+        height=820,
+        min_size=(760, 620),
+        resizable=True,
+        background_color="#f3f6fb",
+    )
+    try:
+        webview.start(
+            gui="qt",
+            icon=str(resource_path("static/mastermind.svg")),
+            private_mode=False,
+            storage_path=str(webview_storage),
+        )
+    finally:
+        server.should_exit = True
+        thread.join(timeout=2)
+
+
+if __name__ == "__main__":
+    run()

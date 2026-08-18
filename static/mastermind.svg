@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <circle cx="512" cy="512" r="460" fill="#0B2E6D"/>
+
+  <!-- Left colored pegs -->
+  <circle cx="365" cy="235" r="92" fill="#FFFFFF"/>
+  <circle cx="365" cy="235" r="76" fill="#FF1F2D"/>
+
+  <circle cx="365" cy="415" r="92" fill="#FFFFFF"/>
+  <circle cx="365" cy="415" r="76" fill="#FFD21A"/>
+
+  <circle cx="365" cy="595" r="92" fill="#FFFFFF"/>
+  <circle cx="365" cy="595" r="76" fill="#1686F5"/>
+
+  <circle cx="365" cy="775" r="92" fill="#FFFFFF"/>
+  <circle cx="365" cy="775" r="76" fill="#21C55D"/>
+
+  <!-- Divider -->
+  <rect x="505" y="165" width="34" height="694" rx="17" fill="#FFFFFF"/>
+
+  <!-- Feedback pegs -->
+  <circle cx="635" cy="270" r="48" fill="#FFFFFF"/>
+  <circle cx="765" cy="270" r="48" fill="#000000"/>
+
+  <circle cx="635" cy="415" r="48" fill="#000000"/>
+  <circle cx="765" cy="415" r="48" fill="#FFFFFF"/>
+
+  <circle cx="635" cy="560" r="48" fill="#FFFFFF"/>
+  <circle cx="765" cy="560" r="48" fill="#FFFFFF"/>
+
+  <circle cx="635" cy="705" r="48" fill="#000000"/>
+  <circle cx="765" cy="705" r="48" fill="#000000"/>
+</svg>
