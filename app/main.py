@@ -10,6 +10,7 @@ from pydantic import BaseModel
 
 from .game import (
     CODE_LENGTH,
+    MAX_WIN_ATTEMPTS,
     MODES,
     calculate_score,
     compact_result,
@@ -67,7 +68,7 @@ def public_game(game: Game) -> PublicGame:
         "ended_at": game["ended_at"],
         "elapsed_seconds": elapsed,
         "score": game["score"],
-        "current_score": live_score(len(game["attempts"]), elapsed) if active else game["score"],
+        "current_score": live_score(len(game["attempts"])) if active else game["score"],
         "secret": None if active else game["secret"],
     }
 
@@ -172,10 +173,11 @@ def submit_guess(game_id: str, payload: GuessRequest) -> PublicGame:
 
     if well_placed == CODE_LENGTH:
         duration = elapsed_seconds(game, now)
-        score = calculate_score(len(attempts), duration)
+        won_in_time = len(attempts) <= MAX_WIN_ATTEMPTS
+        score = calculate_score(len(attempts)) if won_in_time else 0
         finish_game(
             game_id,
-            status="won",
+            status="won" if won_in_time else "completed",
             ended_at=now.isoformat(),
             duration_seconds=duration,
             score=score,

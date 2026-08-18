@@ -109,24 +109,25 @@ def test_validate_guess_rejects_unknown_choice() -> None:
         validate_guess("digits", ["1", "2", "3", "9"])
 
 
-def test_score_rewards_fast_low_attempt_win() -> None:
-    """Le score final récompense une victoire rapide en peu d'essais."""
-    assert calculate_score(attempt_count=1, duration_seconds=20) == 980
-    assert calculate_score(attempt_count=3, duration_seconds=20) == 780
+def test_score_rewards_low_attempt_win() -> None:
+    """Le score final dépend uniquement du nombre d'essais."""
+    assert calculate_score(attempt_count=1) == 900
+    assert calculate_score(attempt_count=3) == 700
 
 
-def test_score_has_minimum_for_a_win() -> None:
-    """Le score final d'une victoire ne descend jamais sous son minimum."""
-    assert calculate_score(attempt_count=20, duration_seconds=5000) == 100
+def test_score_is_zero_outside_win_limit() -> None:
+    """Une combinaison trouvée après neuf essais ne rapporte aucun point."""
+    assert calculate_score(attempt_count=9) == 100
+    assert calculate_score(attempt_count=10) == 0
 
 
-def test_live_score_applies_attempt_and_time_penalties() -> None:
-    """Le score provisoire applique les pénalités et reste positif."""
-    assert live_score(attempt_count=2, elapsed_seconds=30) == 770
-    assert live_score(attempt_count=20, elapsed_seconds=5000) == 0
+def test_live_score_ignores_elapsed_time() -> None:
+    """Le score provisoire applique uniquement la pénalité des essais."""
+    assert live_score(attempt_count=2) == 700
+    assert live_score(attempt_count=20) == 0
 
 
 def test_score_ignores_negative_penalties() -> None:
     """Les compteurs négatifs ne créent pas de bonus artificiel."""
-    assert calculate_score(attempt_count=-1, duration_seconds=-5) == 1000
-    assert live_score(attempt_count=-1, elapsed_seconds=-5) == 1000
+    assert calculate_score(attempt_count=-1) == 900
+    assert live_score(attempt_count=-1) == 900

@@ -4,6 +4,8 @@ from random import SystemRandom
 from .types import FeedbackStatus, ModeDefinition
 
 CODE_LENGTH = 4
+MAX_WIN_ATTEMPTS = 9
+MAX_SCORE = 900
 
 LEGACY_COLOR_VALUES: dict[str, str] = {
     "red": "#ef4444",
@@ -88,14 +90,11 @@ def compact_result(well_placed: int, misplaced: int) -> str:
     return f"{well_placed}{misplaced}"
 
 
-def calculate_score(attempt_count: int, duration_seconds: int) -> int:
-    """Calcule le score final d'une partie gagnée."""
-    # 1000 points pour une victoire immédiate, puis pénalité par essai et seconde.
-    penalty = max(0, attempt_count - 1) * 100 + max(0, duration_seconds)
-    return max(100, 1000 - penalty)
+def calculate_score(attempt_count: int) -> int:
+    """Calcule le score final selon le nombre d'essais uniquement."""
+    return max(0, (MAX_WIN_ATTEMPTS + 1 - max(1, attempt_count)) * 100)
 
 
-def live_score(attempt_count: int, elapsed_seconds: int) -> int:
-    """Calcule le score provisoire affiché pendant une partie."""
-    penalty = max(0, attempt_count) * 100 + max(0, elapsed_seconds)
-    return max(0, 1000 - penalty)
+def live_score(attempt_count: int) -> int:
+    """Calcule le score encore disponible avant la prochaine tentative."""
+    return max(0, MAX_SCORE - max(0, attempt_count) * 100)

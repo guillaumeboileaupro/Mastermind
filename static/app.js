@@ -307,6 +307,8 @@ function renderGame() {
 
     if (state.game.status === "won") {
         els.message.textContent = `Gagné ! Code : ${state.game.secret.join(" · ")} — score ${state.game.score}`;
+    } else if (state.game.status === "completed") {
+        els.message.textContent = `Code trouvé hors limite. Il fallait réussir en moins de 10 essais.`;
     } else if (state.game.status === "lost") {
         els.message.textContent = `Partie abandonnée. Code : ${state.game.secret.join(" · ")}`;
     } else if (state.game.status === "abandoned") {
@@ -327,7 +329,7 @@ function updateClock() {
     }
     els.timer.textContent = formatTime(elapsed);
     if (state.game.status === "active") {
-        const score = Math.max(0, 1000 - state.game.attempts.length * 100 - elapsed);
+        const score = Math.max(0, 900 - state.game.attempts.length * 100);
         els.currentScore.textContent = String(score);
     } else {
         els.currentScore.textContent = String(state.game.score || 0);
@@ -379,7 +381,13 @@ async function loadHistory() {
     history.forEach((game) => {
         const row = document.createElement("tr");
         const label = state.config.modes[game.mode]?.label || game.mode;
-        const status = game.status === "won" ? "Gagnée" : game.status === "lost" ? "Abandonnée" : "Remplacée";
+        const status = game.status === "won"
+            ? "Gagnée"
+            : game.status === "completed"
+                ? "Terminée hors limite"
+                : game.status === "lost"
+                    ? "Abandonnée"
+                    : "Remplacée";
         const secret = game.secret.map((value) => choiceByValue(value, game.mode)?.label || value).join(" · ");
         row.innerHTML = `
             <td>${label}</td>

@@ -170,3 +170,41 @@ def test_missing_games_return_not_found(
 
     assert guess.status_code == 404
     assert give_up.status_code == 404
+
+
+def test_player_can_finish_after_win_limit_without_scoring(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Après neuf échecs, le joueur peut finir sans obtenir une victoire."""
+    use_test_database(tmp_path, monkeypatch)
+
+    with TestClient(app) as client:
+        game = cast(
+            PublicGame,
+            client.post("/api/games", json={"mode": "digits"}).json(),
+        )
+        stored = storage.get_game(game["id"])
+        assert stored is not None
+        secret = stored["secret"]
+        wrong_guess = ["1" if value != "1" else "2" for value in secret]
+
+        for _ in range(9):
+            response = client.post(
+                f"/api/games/{game['id']}/guesses",
+                json={"guess": wrong_guess},
+            )
+            assert response.status_code == 200
+            assert response.json()["status"] == "active"
+
+        response = client.post(
+            f"/api/games/{game['id']}/guesses",
+            json={"guess": secret},
+        )
+        completed = cast(PublicGame, response.json())
+        game_stats = cast(Stats, client.get("/api/stats").json())
+
+    assert completed["status"] == "completed"
+    assert completed["score"] == 0
+    assert game_stats["games_total"] == 1
+    assert game_stats["wins"] == 0

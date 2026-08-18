@@ -133,11 +133,13 @@ x86-64. Le workflow exécute les tests avant de produire et téléverser le paqu
 
 ## Score
 
-Une victoire démarre sur une base de 1000 points.
+Le score dépend uniquement du nombre d'essais. Le chronomètre reste affiché à
+titre informatif et ne modifie jamais le score.
 
-- chaque tentative ratée avant la victoire retire 100 points ;
-- chaque seconde retire 1 point ;
-- une victoire rapporte au minimum 100 points ;
+- trouver le code du 1er au 9e essai rapporte respectivement de 900 à 100 points ;
+- la partie est gagnée uniquement si le code est trouvé en moins de 10 essais ;
+- après le 9e essai, le joueur peut continuer jusqu'à trouver le code ;
+- une partie terminée hors limite rapporte 0 point et ne compte pas comme victoire ;
 - une partie abandonnée rapporte 0 point.
 
 ## Architecture
@@ -188,5 +190,5 @@ python -m pytest -q
 ```
 
 Toutes les fonctions Python possèdent une docstring et des annotations de type.
-La CI exécute le contrôle statique strict avec `mypy` avant les **40 tests
+La CI exécute le contrôle statique strict avec `mypy` avant les **41 tests
 automatisés**.
