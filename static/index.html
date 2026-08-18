@@ -9,6 +9,16 @@
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
+    <div id="victory-overlay" class="victory-overlay" aria-hidden="true">
+        <div id="confetti" class="confetti" aria-hidden="true"></div>
+        <div class="victory-card" role="status" aria-live="polite">
+            <p class="eyebrow">Victoire</p>
+            <h2>Combinaison trouvée !</h2>
+            <p id="victory-summary"></p>
+            <button id="close-victory" class="primary" type="button">Continuer</button>
+        </div>
+    </div>
+
     <main class="page">
         <header class="hero">
             <div class="brand">
@@ -42,6 +52,7 @@
                 <button id="give-up" class="danger subtle">Abandonner</button>
             </div>
 
+            <p class="interaction-help">Clique sur un choix pour l’ajouter. Clique sur un pion posé pour l’enlever, ou glisse-dépose les pions pour les placer et les réordonner.</p>
             <div id="current-guess" class="guess-row" aria-label="Combinaison actuelle"></div>
             <div id="choice-palette" class="palette" aria-label="Choix possibles"></div>
 
@@ -60,9 +71,36 @@
                     <p class="eyebrow">Partie en cours</p>
                     <h2>Tentatives</h2>
                 </div>
-                <span class="score-help">Score 21 = 2 bien placées, 1 mal placée</span>
+                <span id="score-help" class="score-help">Aucune tentative pour le moment.</span>
             </div>
             <div id="attempts" class="attempts"></div>
+        </section>
+
+        <section class="panel help-panel" aria-labelledby="help-title">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Aide</p>
+                    <h2 id="help-title">Comment jouer ?</h2>
+                </div>
+            </div>
+            <div class="help-grid">
+                <article>
+                    <strong>1. Trouve le code</strong>
+                    <p>Le jeu choisit une combinaison secrète de 4 positions parmi 6 choix. Une même couleur ou un même chiffre peut apparaître plusieurs fois.</p>
+                </article>
+                <article>
+                    <strong>2. Propose une combinaison</strong>
+                    <p>Ajoute 4 pions par clic ou glisser-déposer, puis valide. Tu peux cliquer sur un pion posé pour le retirer avant de valider.</p>
+                </article>
+                <article>
+                    <strong>3. Lis le résultat</strong>
+                    <p>Le premier chiffre indique le nombre de valeurs bien placées. Le second indique les bonnes valeurs placées au mauvais endroit.</p>
+                </article>
+                <article>
+                    <strong>4. Gagne avec 40</strong>
+                    <p>Quand le résultat est <strong>40</strong>, les 4 valeurs sont correctes et bien placées : la combinaison est trouvée.</p>
+                </article>
+            </div>
         </section>
 
         <section class="panel">

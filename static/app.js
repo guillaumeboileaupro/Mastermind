@@ -3,6 +3,7 @@ const state = {
     game: null,
     guess: [],
     receivedAt: Date.now(),
+    suppressSlotClickUntil: 0,
 };
 
 const els = {
@@ -22,6 +23,11 @@ const els = {
     message: document.querySelector("#message"),
     attempts: document.querySelector("#attempts"),
     history: document.querySelector("#history"),
+    scoreHelp: document.querySelector("#score-help"),
+    victoryOverlay: document.querySelector("#victory-overlay"),
+    victorySummary: document.querySelector("#victory-summary"),
+    closeVictory: document.querySelector("#close-victory"),
+    confetti: document.querySelector("#confetti"),
 };
 
 async function api(path, options = {}) {
@@ -57,6 +63,14 @@ function choiceByValue(value, mode = state.game?.mode || els.mode.value) {
     return modeConfig(mode)?.choices.find((choice) => choice.value === value);
 }
 
+function blankGuess() {
+    return Array(state.config?.code_length || 4).fill(null);
+}
+
+function isGuessComplete() {
+    return state.guess.length === state.config.code_length && state.guess.every(Boolean);
+}
+
 function renderToken(value, mode, small = false) {
     const choice = choiceByValue(value, mode);
     const token = document.createElement("span");
@@ -81,6 +95,22 @@ function renderModeSelector() {
     });
 }
 
+function addChoice(value) {
+    if (!state.game || state.game.status !== "active") return;
+    const emptyIndex = state.guess.findIndex((entry) => !entry);
+    if (emptyIndex === -1) return;
+    state.guess[emptyIndex] = value;
+    renderCurrentGuess();
+}
+
+function dragPayload(event) {
+    try {
+        return JSON.parse(event.dataTransfer.getData("text/plain"));
+    } catch (_) {
+        return null;
+    }
+}
+
 function renderPalette() {
     els.palette.innerHTML = "";
     const config = modeConfig();
@@ -91,19 +121,21 @@ function renderPalette() {
         const button = document.createElement("button");
         button.className = "choice-button";
         button.type = "button";
-        button.title = choice.label;
+        button.title = `${choice.label} — cliquer ou glisser`;
         button.setAttribute("aria-label", choice.label);
+        button.draggable = true;
         if (state.game?.mode === "colors") {
             button.style.background = choice.color;
         } else {
             button.textContent = choice.label;
         }
-        button.addEventListener("click", () => {
-            if (!state.game || state.game.status !== "active") return;
-            if (state.guess.length >= state.config.code_length) return;
-            state.guess.push(choice.value);
-            renderCurrentGuess();
+        button.addEventListener("click", () => addChoice(choice.value));
+        button.addEventListener("dragstart", (event) => {
+            event.dataTransfer.effectAllowed = "copy";
+            event.dataTransfer.setData("text/plain", JSON.stringify({ type: "palette", value: choice.value }));
+            button.classList.add("dragging");
         });
+        button.addEventListener("dragend", () => button.classList.remove("dragging"));
         els.palette.appendChild(button);
     });
 }
@@ -111,16 +143,76 @@ function renderPalette() {
 function renderCurrentGuess() {
     els.currentGuess.innerHTML = "";
     for (let index = 0; index < state.config.code_length; index += 1) {
-        if (state.guess[index]) {
-            els.currentGuess.appendChild(renderToken(state.guess[index], state.game?.mode));
+        const value = state.guess[index];
+        const slot = document.createElement("div");
+        slot.className = `guess-slot${value ? " filled" : ""}`;
+        slot.dataset.index = String(index);
+        slot.title = value ? "Cliquer pour enlever, ou glisser pour déplacer" : "Dépose un pion ici";
+
+        if (value) {
+            slot.appendChild(renderToken(value, state.game?.mode));
+            slot.draggable = true;
+            slot.setAttribute("role", "button");
+            slot.setAttribute("tabindex", "0");
+            slot.setAttribute("aria-label", `Position ${index + 1}, cliquer pour retirer`);
+            slot.addEventListener("click", () => {
+                if (Date.now() < state.suppressSlotClickUntil) return;
+                state.guess[index] = null;
+                renderCurrentGuess();
+            });
+            slot.addEventListener("keydown", (event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    state.guess[index] = null;
+                    renderCurrentGuess();
+                }
+            });
+            slot.addEventListener("dragstart", (event) => {
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData("text/plain", JSON.stringify({ type: "slot", index, value }));
+                slot.classList.add("dragging");
+                state.suppressSlotClickUntil = Date.now() + 400;
+            });
+            slot.addEventListener("dragend", () => {
+                slot.classList.remove("dragging");
+                state.suppressSlotClickUntil = Date.now() + 200;
+            });
         } else {
             const empty = document.createElement("span");
             empty.className = "token empty";
             empty.textContent = "?";
-            els.currentGuess.appendChild(empty);
+            slot.appendChild(empty);
         }
+
+        slot.addEventListener("dragover", (event) => {
+            if (!state.game || state.game.status !== "active") return;
+            event.preventDefault();
+            event.dataTransfer.dropEffect = "move";
+            slot.classList.add("drop-target");
+        });
+        slot.addEventListener("dragleave", () => slot.classList.remove("drop-target"));
+        slot.addEventListener("drop", (event) => {
+            event.preventDefault();
+            slot.classList.remove("drop-target");
+            if (!state.game || state.game.status !== "active") return;
+            const payload = dragPayload(event);
+            if (!payload) return;
+
+            if (payload.type === "palette") {
+                state.guess[index] = payload.value;
+            } else if (payload.type === "slot" && Number.isInteger(payload.index)) {
+                const sourceIndex = payload.index;
+                const targetValue = state.guess[index];
+                state.guess[index] = state.guess[sourceIndex];
+                state.guess[sourceIndex] = targetValue;
+            }
+            state.suppressSlotClickUntil = Date.now() + 250;
+            renderCurrentGuess();
+        });
+
+        els.currentGuess.appendChild(slot);
     }
-    els.submit.disabled = !state.game || state.game.status !== "active" || state.guess.length !== state.config.code_length;
+    els.submit.disabled = !state.game || state.game.status !== "active" || !isGuessComplete();
 }
 
 function renderAttempts() {
@@ -128,8 +220,12 @@ function renderAttempts() {
     const attempts = state.game?.attempts || [];
     if (!attempts.length) {
         els.attempts.innerHTML = '<p class="empty-state">Aucune tentative pour le moment.</p>';
+        els.scoreHelp.textContent = "Aucune tentative pour le moment.";
         return;
     }
+
+    const latest = attempts[attempts.length - 1];
+    els.scoreHelp.textContent = `Ton résultat : ${latest.result} — ${latest.well_placed} bien placée(s), ${latest.misplaced} mal placée(s).`;
 
     [...attempts].reverse().forEach((attempt) => {
         const row = document.createElement("div");
@@ -156,7 +252,7 @@ function renderAttempts() {
 
 function renderGame() {
     state.receivedAt = Date.now();
-    state.guess = [];
+    state.guess = blankGuess();
     if (!state.game) {
         els.message.textContent = "Aucune partie en cours. Choisis un mode et lance une partie.";
         els.timer.textContent = "00:00";
@@ -201,6 +297,32 @@ function updateClock() {
     }
 }
 
+function showVictory() {
+    if (!state.game || state.game.status !== "won") return;
+    els.victorySummary.textContent = `${state.game.attempts.length} essai(s) · ${formatTime(state.game.elapsed_seconds)} · score ${state.game.score}`;
+    els.confetti.innerHTML = "";
+    const colors = ["#ef4444", "#3b82f6", "#22c55e", "#eab308", "#a855f7", "#f97316"];
+    for (let index = 0; index < 70; index += 1) {
+        const piece = document.createElement("span");
+        piece.className = "confetti-piece";
+        piece.style.left = `${Math.random() * 100}%`;
+        piece.style.background = colors[index % colors.length];
+        piece.style.animationDelay = `${Math.random() * 0.65}s`;
+        piece.style.animationDuration = `${1.8 + Math.random() * 1.5}s`;
+        piece.style.setProperty("--spin", `${360 + Math.floor(Math.random() * 720)}deg`);
+        els.confetti.appendChild(piece);
+    }
+    els.victoryOverlay.classList.add("visible");
+    els.victoryOverlay.setAttribute("aria-hidden", "false");
+    els.closeVictory.focus();
+}
+
+function hideVictory() {
+    els.victoryOverlay.classList.remove("visible");
+    els.victoryOverlay.setAttribute("aria-hidden", "true");
+    els.confetti.innerHTML = "";
+}
+
 async function loadStats() {
     const stats = await api("/api/stats");
     els.totalScore.textContent = String(stats.total_score);
@@ -236,6 +358,7 @@ async function loadHistory() {
 
 async function startGame() {
     try {
+        hideVictory();
         state.game = await api("/api/games", {
             method: "POST",
             body: JSON.stringify({ mode: els.mode.value }),
@@ -248,16 +371,18 @@ async function startGame() {
 }
 
 async function submitGuess() {
-    if (!state.game || state.guess.length !== state.config.code_length) return;
+    if (!state.game || !isGuessComplete()) return;
     try {
         state.game = await api(`/api/games/${state.game.id}/guesses`, {
             method: "POST",
             body: JSON.stringify({ guess: state.guess }),
         });
+        const won = state.game.status === "won";
         renderGame();
         if (state.game.status !== "active") {
             await Promise.all([loadStats(), loadHistory()]);
         }
+        if (won) showVictory();
     } catch (error) {
         els.message.textContent = error.message;
     }
@@ -277,6 +402,7 @@ async function giveUp() {
 async function init() {
     try {
         state.config = await api("/api/modes");
+        state.guess = blankGuess();
         renderModeSelector();
         state.game = await api("/api/games/current");
         if (state.game) els.mode.value = state.game.mode;
@@ -291,14 +417,26 @@ els.newGame.addEventListener("click", startGame);
 els.submit.addEventListener("click", submitGuess);
 els.giveUp.addEventListener("click", giveUp);
 els.backspace.addEventListener("click", () => {
-    state.guess.pop();
+    for (let index = state.guess.length - 1; index >= 0; index -= 1) {
+        if (state.guess[index]) {
+            state.guess[index] = null;
+            break;
+        }
+    }
     renderCurrentGuess();
 });
 els.clear.addEventListener("click", () => {
-    state.guess = [];
+    state.guess = blankGuess();
     renderCurrentGuess();
 });
 els.mode.addEventListener("change", renderPalette);
+els.closeVictory.addEventListener("click", hideVictory);
+els.victoryOverlay.addEventListener("click", (event) => {
+    if (event.target === els.victoryOverlay) hideVictory();
+});
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && els.victoryOverlay.classList.contains("visible")) hideVictory();
+});
 
 setInterval(updateClock, 1000);
 init();
