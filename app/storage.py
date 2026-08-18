@@ -139,6 +139,13 @@ def list_history(limit: int = 50) -> list[Game]:
     return [_decode(row) for row in rows]
 
 
+def reset_scores() -> int:
+    """Supprime les parties terminées et retourne leur nombre."""
+    with _connect() as db:
+        cursor = db.execute("DELETE FROM games WHERE status != 'active'")
+    return max(0, cursor.rowcount)
+
+
 def set_player_name(game_id: str, player_name: str) -> None:
     """Associe un pseudonyme à une partie terminée."""
     with _connect() as db:

@@ -29,7 +29,8 @@ def test_help_is_opened_in_a_dialog() -> None:
     assert 'id="open-help"' in page
     assert 'id="help-overlay" class="help-overlay" aria-hidden="true"' in page
     assert 'role="dialog" aria-modal="true"' in page
-    assert 'els.openHelp.addEventListener("click", showHelp)' in script
+    assert 'els.openHelp.addEventListener("click", () =>' in script
+    assert "showHelp();" in script
 
 
 def test_finished_game_asks_for_player_name() -> None:
@@ -67,3 +68,16 @@ def test_help_rule_titles_are_not_numbered() -> None:
 
     for number in range(1, 5):
         assert f"<strong>{number}." not in page
+
+
+def test_hamburger_menu_contains_settings_and_score_reset() -> None:
+    """Le menu hamburger expose les paramètres et la remise à zéro confirmée."""
+    page = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    script = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+
+    assert 'id="open-settings" class="menu-button"' in page
+    assert 'id="settings-overlay"' in page
+    assert 'id="reset-scores"' in page
+    assert "async function resetScoreHistory()" in script
+    assert 'api("/api/scores", { method: "DELETE" })' in script
+    assert "Clique une seconde fois pour confirmer." in script

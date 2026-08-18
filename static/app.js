@@ -39,6 +39,11 @@ const els = {
     openHelp: document.querySelector("#open-help"),
     helpOverlay: document.querySelector("#help-overlay"),
     closeHelp: document.querySelector("#close-help"),
+    openSettings: document.querySelector("#open-settings"),
+    settingsOverlay: document.querySelector("#settings-overlay"),
+    closeSettings: document.querySelector("#close-settings"),
+    resetScores: document.querySelector("#reset-scores"),
+    resetConfirmation: document.querySelector("#reset-confirmation"),
 };
 
 async function api(path, options = {}) {
@@ -453,6 +458,41 @@ function hideHelp() {
     els.openHelp.focus();
 }
 
+function showSettings() {
+    els.settingsOverlay.classList.add("visible");
+    els.settingsOverlay.setAttribute("aria-hidden", "false");
+    els.openSettings.setAttribute("aria-expanded", "true");
+    els.closeSettings.focus();
+}
+
+function hideSettings() {
+    els.settingsOverlay.classList.remove("visible");
+    els.settingsOverlay.setAttribute("aria-hidden", "true");
+    els.openSettings.setAttribute("aria-expanded", "false");
+    els.resetScores.dataset.confirming = "false";
+    els.resetScores.textContent = "Réinitialiser les scores";
+    els.resetConfirmation.textContent = "";
+    els.openSettings.focus();
+}
+
+async function resetScoreHistory() {
+    if (els.resetScores.dataset.confirming !== "true") {
+        els.resetScores.dataset.confirming = "true";
+        els.resetScores.textContent = "Confirmer la réinitialisation";
+        els.resetConfirmation.textContent = "Clique une seconde fois pour confirmer.";
+        return;
+    }
+    try {
+        const result = await api("/api/scores", { method: "DELETE" });
+        await Promise.all([loadStats(), loadHistory()]);
+        els.resetScores.dataset.confirming = "false";
+        els.resetScores.textContent = "Réinitialiser les scores";
+        els.resetConfirmation.textContent = `${result.deleted_games} partie(s) supprimée(s).`;
+    } catch (error) {
+        els.resetConfirmation.textContent = error.message;
+    }
+}
+
 async function loadStats() {
     const stats = await api("/api/stats");
     els.totalScore.textContent = String(stats.total_score);
@@ -585,10 +625,19 @@ els.savePlayer.addEventListener("click", savePlayerName);
 els.playerName.addEventListener("keydown", (event) => {
     if (event.key === "Enter") savePlayerName();
 });
-els.openHelp.addEventListener("click", showHelp);
+els.openHelp.addEventListener("click", () => {
+    hideSettings();
+    showHelp();
+});
 els.closeHelp.addEventListener("click", hideHelp);
 els.helpOverlay.addEventListener("click", (event) => {
     if (event.target === els.helpOverlay) hideHelp();
+});
+els.openSettings.addEventListener("click", showSettings);
+els.closeSettings.addEventListener("click", hideSettings);
+els.resetScores.addEventListener("click", resetScoreHistory);
+els.settingsOverlay.addEventListener("click", (event) => {
+    if (event.target === els.settingsOverlay) hideSettings();
 });
 els.victoryOverlay.addEventListener("click", (event) => {
     if (event.target === els.victoryOverlay) hideVictory();
@@ -596,6 +645,7 @@ els.victoryOverlay.addEventListener("click", (event) => {
 document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && els.victoryOverlay.classList.contains("visible")) hideVictory();
     if (event.key === "Escape" && els.helpOverlay.classList.contains("visible")) hideHelp();
+    if (event.key === "Escape" && els.settingsOverlay.classList.contains("visible")) hideSettings();
 });
 
 setInterval(updateClock, 1000);

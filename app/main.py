@@ -29,6 +29,7 @@ from .storage import (
     get_stats,
     init_db,
     list_history,
+    reset_scores,
     save_attempts,
     set_player_name,
 )
@@ -256,3 +257,9 @@ def save_player_name(game_id: str, payload: PlayerNameRequest) -> PublicGame:
 def stats() -> Stats:
     """Retourne les statistiques agrégées des parties terminées."""
     return get_stats()
+
+
+@app.delete("/api/scores")
+def clear_scores() -> dict[str, int]:
+    """Réinitialise l'historique et les scores des parties terminées."""
+    return {"deleted_games": reset_scores()}

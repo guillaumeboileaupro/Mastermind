@@ -167,6 +167,27 @@ def test_init_db_adds_player_name_to_existing_database(
     assert "player_name" in columns
 
 
+def test_reset_scores_preserves_active_game(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """La remise à zéro supprime l'historique mais conserve la partie active."""
+    configure_database(tmp_path, monkeypatch)
+    finished = storage.create_game("digits", ["1"] * 4, "2026-01-01T00:00:00+00:00")
+    storage.finish_game(
+        finished["id"],
+        status="won",
+        ended_at="2026-01-01T00:00:01+00:00",
+        duration_seconds=1,
+        score=1000,
+    )
+    active = storage.create_game("digits", ["2"] * 4, "2026-01-01T00:00:02+00:00")
+
+    assert storage.reset_scores() == 1
+    assert storage.list_history() == []
+    assert storage.get_current_game() == active
+
+
 def test_legacy_color_names_are_decoded_as_hex_values(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
