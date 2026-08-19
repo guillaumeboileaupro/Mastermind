@@ -142,14 +142,24 @@ def compact_result(well_placed: int, misplaced: int) -> str:
     return f"{well_placed}{misplaced}"
 
 
-def calculate_score(attempt_count: int, max_attempts: int = MAX_WIN_ATTEMPTS) -> int:
-    """Calcule le score final selon le nombre d'essais et la variante."""
-    return max(0, (max_attempts + 1 - max(1, attempt_count)) * 100)
+def calculate_score(
+    attempt_count: int,
+    max_attempts: int = MAX_WIN_ATTEMPTS,
+    duration_seconds: int = 0,
+) -> int:
+    """Calcule le score d'une partie selon les essais et sa durée."""
+    attempt_score = (max_attempts + 1 - max(1, attempt_count)) * 100
+    return max(0, attempt_score - max(0, duration_seconds))
 
 
-def live_score(attempt_count: int, max_attempts: int = MAX_WIN_ATTEMPTS) -> int:
-    """Calcule le score encore disponible avant la prochaine tentative."""
-    return max(0, max_attempts * 100 - max(0, attempt_count) * 100)
+def live_score(
+    attempt_count: int,
+    max_attempts: int = MAX_WIN_ATTEMPTS,
+    elapsed_seconds: int = 0,
+) -> int:
+    """Calcule le score disponible selon les essais et le temps écoulé."""
+    attempt_score = max_attempts * 100 - max(0, attempt_count) * 100
+    return max(0, attempt_score - max(0, elapsed_seconds))
 
 
 __all__ = [

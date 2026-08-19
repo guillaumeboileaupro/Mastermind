@@ -174,7 +174,6 @@ def get_stats() -> Stats:
             SELECT
                 COUNT(*) AS games_total,
                 SUM(CASE WHEN status = 'won' THEN 1 ELSE 0 END) AS wins,
-                COALESCE(SUM(score), 0) AS total_score,
                 COALESCE(MAX(score), 0) AS best_score,
                 COALESCE(AVG(CASE WHEN status = 'won' THEN duration_seconds END), 0) AS average_win_duration
             FROM games
@@ -184,7 +183,6 @@ def get_stats() -> Stats:
     return {
         "games_total": int(row["games_total"] or 0),
         "wins": int(row["wins"] or 0),
-        "total_score": int(row["total_score"] or 0),
         "best_score": int(row["best_score"] or 0),
         "average_win_duration": round(float(row["average_win_duration"] or 0), 1),
     }

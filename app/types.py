@@ -86,6 +86,5 @@ class ModesResponse(TypedDict):
 class Stats(TypedDict):
     games_total: int
     wins: int
-    total_score: int
     best_score: int
     average_win_duration: float

@@ -48,7 +48,7 @@ def test_game_flow_persists_win_and_stats(
         stats = cast(Stats, client.get("/api/stats").json())
         assert stats["games_total"] == 1
         assert stats["wins"] == 1
-        assert stats["total_score"] == finished["score"]
+        assert "total_score" not in stats
 
         history = cast(list[PublicGame], client.get("/api/history").json())
         assert len(history) == 1

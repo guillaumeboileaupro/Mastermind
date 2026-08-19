@@ -78,7 +78,9 @@ def public_game(game: Game) -> PublicGame:
         "elapsed_seconds": elapsed,
         "score": game["score"],
         "current_score": (
-            live_score(len(game["attempts"]), max_attempts) if active else game["score"]
+            live_score(len(game["attempts"]), max_attempts, elapsed)
+            if active
+            else game["score"]
         ),
         "secret": None if active else game["secret"],
         "player_name": game["player_name"],
@@ -212,7 +214,11 @@ def submit_guess(game_id: str, payload: GuessRequest) -> PublicGame:
         duration = elapsed_seconds(game, now)
         max_attempts = max_attempts_for(game["mode"])
         won_in_time = len(attempts) <= max_attempts
-        score = calculate_score(len(attempts), max_attempts) if won_in_time else 0
+        score = (
+            calculate_score(len(attempts), max_attempts, duration)
+            if won_in_time
+            else 0
+        )
         finish_game(
             game_id,
             status="won" if won_in_time else "completed",

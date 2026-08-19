@@ -81,3 +81,14 @@ def test_hamburger_menu_contains_settings_and_score_reset() -> None:
     assert "async function resetScoreHistory()" in script
     assert 'api("/api/scores", { method: "DELETE" })' in script
     assert "Clique une seconde fois pour confirmer." in script
+
+
+def test_score_is_per_game_and_decreases_with_time() -> None:
+    """L'interface retire le cumul global et actualise le score avec le temps."""
+    page = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    script = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+
+    assert "Score total" not in page
+    assert "total-score" not in page
+    assert "totalScore" not in script
+    assert "state.game.attempts.length * 100 - elapsed" in script

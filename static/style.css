@@ -52,7 +52,7 @@ button.danger { color: var(--danger); }
 .menu-button span { width: 18px; height: 2px; border-radius: 1px; background: #3c4c5e; }
 
 .variant-meta { margin: 0; padding: 12px 0 14px; color: #687586; font-size: .82rem; line-height: 1.4; }
-.stats-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0 0 22px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.stats-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0 0 22px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .stats-grid article { min-width: 0; padding: 11px 16px; border-right: 1px solid var(--line); background: transparent; }
 .stats-grid article:first-child { padding-left: 0; }
 .stats-grid article:last-child { padding-right: 0; border-right: 0; }
@@ -165,11 +165,8 @@ tbody tr:hover { background: rgba(248, 250, 252, .7); }
     .app-logo { width: 42px; height: 42px; flex-basis: 42px; border-radius: 9px; }
     h1 { font-size: 1.75rem; }
     .controls { flex: 0 0 auto; }
-    .stats-grid { grid-template-columns: repeat(2, 1fr); }
-    .stats-grid article { padding: 9px 10px; border-bottom: 1px solid var(--line); }
-    .stats-grid article:nth-child(2) { border-right: 0; }
-    .stats-grid article:nth-child(3) { padding-left: 0; border-bottom: 0; }
-    .stats-grid article:nth-child(4) { border-right: 0; border-bottom: 0; }
+    .stats-grid { grid-template-columns: repeat(3, 1fr); }
+    .stats-grid article { padding: 9px 7px; }
     .game-card { padding: 20px 14px 22px; }
     .game-card::before { left: 14px; }
     .section-heading { align-items: flex-start; }

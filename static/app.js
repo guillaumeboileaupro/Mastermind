@@ -18,7 +18,6 @@ const els = {
     giveUp: document.querySelector("#give-up"),
     timer: document.querySelector("#timer"),
     currentScore: document.querySelector("#current-score"),
-    totalScore: document.querySelector("#total-score"),
     wins: document.querySelector("#wins"),
     modeTitle: document.querySelector("#mode-title"),
     currentGuess: document.querySelector("#current-guess"),
@@ -472,7 +471,10 @@ function updateClock() {
     }
     els.timer.textContent = formatTime(elapsed);
     if (state.game.status === "active") {
-        const score = Math.max(0, currentMaxAttempts() * 100 - state.game.attempts.length * 100);
+        const score = Math.max(
+            0,
+            currentMaxAttempts() * 100 - state.game.attempts.length * 100 - elapsed,
+        );
         els.currentScore.textContent = String(score);
     } else {
         els.currentScore.textContent = String(state.game.score || 0);
@@ -586,7 +588,6 @@ async function resetScoreHistory() {
 
 async function loadStats() {
     const stats = await api("/api/stats");
-    els.totalScore.textContent = String(stats.total_score);
     els.wins.textContent = `${stats.wins}/${stats.games_total}`;
 }
 
