@@ -2,7 +2,13 @@ from typing import Literal
 
 from typing_extensions import NotRequired, TypedDict
 
-FeedbackStatus = Literal["well_placed", "misplaced", "absent"]
+FeedbackStatus = Literal[
+    "well_placed",
+    "misplaced",
+    "absent",
+    "higher",
+    "lower",
+]
 
 
 class Attempt(TypedDict):
@@ -18,6 +24,7 @@ class Attempt(TypedDict):
 class Game(TypedDict):
     id: str
     mode: str
+    code_length: int
     secret: list[str]
     attempts: list[Attempt]
     status: str
@@ -31,6 +38,8 @@ class Game(TypedDict):
 class PublicGame(TypedDict):
     id: str
     mode: str
+    code_length: int
+    max_attempts: int
     status: str
     attempts: list[Attempt]
     started_at: str
@@ -45,6 +54,8 @@ class PublicGame(TypedDict):
 class Choice(TypedDict):
     value: str
     label: str
+    color: NotRequired[str]
+    symbol: NotRequired[str]
 
 
 class ModeDefinition(TypedDict):
@@ -52,15 +63,28 @@ class ModeDefinition(TypedDict):
     choices: list[Choice]
 
 
+class VariantDefinition(TypedDict):
+    label: str
+    year: str
+    choices: list[Choice]
+    code_lengths: list[int]
+    default_code_length: int
+    max_attempts: int
+    description: str
+    note: str
+    rules: NotRequired[list[str]]
+    feedback_kind: NotRequired[str]
+
+
 class ModesResponse(TypedDict):
     code_length: int
     repetition_allowed: bool
     modes: dict[str, ModeDefinition]
+    variants: dict[str, VariantDefinition]
 
 
 class Stats(TypedDict):
     games_total: int
     wins: int
-    total_score: int
     best_score: int
     average_win_duration: float
