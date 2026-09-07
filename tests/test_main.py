@@ -9,6 +9,7 @@ def active_game() -> Game:
     return {
         "id": "game-id",
         "mode": "digits",
+        "code_length": 4,
         "secret": ["1", "2", "3", "4"],
         "attempts": [],
         "status": "active",

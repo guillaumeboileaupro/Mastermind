@@ -46,7 +46,7 @@ Exemple : `21` signifie 2 valeurs bien placées et 1 valeur correcte mal placée
 - reprise d'une partie active après redémarrage ;
 - chronomètre de la partie en cours ;
 - score courant et score final ;
-- score total cumulé ;
+- score propre à chaque partie, sans cumul global ;
 - historique persistant des parties ;
 - pseudonyme enregistrable en fin de partie et affiché dans l'historique des scores ;
 - nombre de victoires ;
@@ -141,10 +141,12 @@ x86-64. Le workflow exécute les tests avant de produire et téléverser le paqu
 
 ## Score
 
-Le score dépend uniquement du nombre d'essais. Le chronomètre reste affiché à
-titre informatif et ne modifie jamais le score.
+Le score dépend du nombre d'essais et du temps écoulé. Chaque essai consommé
+retire 100 points et chaque seconde écoulée retire 1 point. Il n'existe aucun
+total cumulé entre les parties.
 
-- trouver le code du 1er au 10e essai rapporte respectivement de 1000 à 100 points ;
+- le score de départ dépend de la limite d'essais de la variante ;
+- chaque essai consommé retire 100 points et chaque seconde retire 1 point ;
 - la partie est gagnée si le code est trouvé en 10 essais maximum ;
 - à partir du 11e essai, le joueur peut continuer jusqu'à trouver le code ;
 - une partie terminée hors limite rapporte 0 point et ne compte pas comme victoire ;
@@ -185,7 +187,7 @@ Mastermind/
 | `POST`  | `/api/games/{id}/guesses` | proposer une combinaison              |
 | `POST`  | `/api/games/{id}/give-up` | abandonner la partie                  |
 | `GET`   | `/api/history`            | historique des parties                |
-| `GET`   | `/api/stats`              | statistiques et score total           |
+| `GET`   | `/api/stats`              | statistiques sans cumul des scores    |
 
 Le code secret n'est jamais renvoyé par l'API pendant une partie active. Il devient visible uniquement quand la partie est terminée.
 
@@ -198,5 +200,5 @@ python -m pytest -q
 ```
 
 Toutes les fonctions Python possèdent une docstring et des annotations de type.
-La CI exécute le contrôle statique strict avec `mypy` avant les **55 tests
+La CI exécute le contrôle statique strict avec `mypy` avant les **67 tests
 automatisés**.

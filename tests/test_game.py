@@ -110,9 +110,10 @@ def test_validate_guess_rejects_unknown_choice() -> None:
 
 
 def test_score_rewards_low_attempt_win() -> None:
-    """Le score final dépend uniquement du nombre d'essais."""
+    """Le score final diminue avec les essais et le temps écoulé."""
     assert calculate_score(attempt_count=1) == 1000
     assert calculate_score(attempt_count=3) == 800
+    assert calculate_score(attempt_count=3, duration_seconds=45) == 755
 
 
 def test_score_is_zero_outside_win_limit() -> None:
@@ -122,9 +123,10 @@ def test_score_is_zero_outside_win_limit() -> None:
     assert calculate_score(attempt_count=11) == 0
 
 
-def test_live_score_ignores_elapsed_time() -> None:
-    """Le score provisoire applique uniquement la pénalité des essais."""
+def test_live_score_uses_elapsed_time() -> None:
+    """Le score provisoire diminue à chaque seconde écoulée."""
     assert live_score(attempt_count=2) == 800
+    assert live_score(attempt_count=2, elapsed_seconds=35) == 765
     assert live_score(attempt_count=20) == 0
 
 

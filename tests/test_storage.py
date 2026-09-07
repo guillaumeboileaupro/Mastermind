@@ -74,7 +74,6 @@ def test_game_storage_lifecycle(
     assert storage.get_stats() == {
         "games_total": 1,
         "wins": 1,
-        "total_score": 995,
         "best_score": 995,
         "average_win_duration": 5.0,
     }
