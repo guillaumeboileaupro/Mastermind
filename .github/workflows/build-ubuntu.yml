@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     tags: ["v*"]
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -18,10 +19,26 @@ jobs:
       QT_QPA_PLATFORM: offscreen
       VERSION: "0.1.0"
     steps:
+      - name: Pin Bullseye package repositories
+        run: |
+          cat > /etc/apt/sources.list <<'EOF'
+          deb [check-valid-until=no] https://snapshot.debian.org/archive/debian/20260830/ bullseye main
+          deb [check-valid-until=no] https://snapshot.debian.org/archive/debian/20260830/ bullseye-updates main
+          deb [check-valid-until=no] https://snapshot.debian.org/archive/debian-security/20260830/ bullseye-security main
+          EOF
+
       - name: Install build tools
         run: |
           apt-get update
-          apt-get install -y git binutils dpkg-dev libdbus-1-3 libegl1 libgl1 libxkbcommon-x11-0 libxcb-cursor0
+          apt-get install -y --no-install-recommends \
+            git \
+            binutils \
+            dpkg-dev \
+            libdbus-1-3 \
+            libegl1 \
+            libgl1 \
+            libxkbcommon-x11-0 \
+            libxcb-cursor0
 
       - name: Checkout
         uses: actions/checkout@v4
